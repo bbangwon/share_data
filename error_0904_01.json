@@ -1,0 +1,14 @@
+{
+        "result": "success",
+        "detail": {
+          "response_code": "C20000",
+          "response_message": "OK",
+          "llm_result": {
+            "answer": "사용자의 질의는 \"3번 바닷가 위치가 정확하게 어디야?\"입니다. 대화이력을 고려하여 의도분석을 진행하면, 이는 이전에 언급된 바닷가 중 하나인 \"송도 해수욕장\"의 위치를 묻는 질의응답 요청으로 판단됩니다.\n\n따라서, 의도분류는 \"질의응답\"에 해당하며, 서비스 카테고리는 \"부산시정\"으로 분류됩니다. 검색 문장은 \"송도 해수욕장의 위치를 알려주세요\"로 생성됩니다.\n\n이를 JSON 포맷으로 표현하면 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```\n\n따라서, 정답은 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```",
+            "finish_resaon": null,
+            "annotations": [],
+            "token_count": 313,
+            "processing_time": 6.67
+          }
+        }
+      }
