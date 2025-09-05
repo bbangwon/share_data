@@ -1,0 +1,298 @@
+# 로그 DB 쿼리
+
+## 질문 찾기
+```javascript
+use('log_db');
+
+const items = db.getCollection('logs').find({
+    "logs.0.BODY.text": { $regex: '3번 바닷가' }
+}).toArray();
+
+console.log(`items length : ${items.length}`);
+console.log("-------------------------------");
+if (items.length > 0)
+{
+    for (let index = 0; index < items.length; index++) {
+        const element = items[index];        
+        console.log(JSON.stringify(element, null, 2));
+        console.log("-------------------------------");
+    }
+}
+```
+
+## 질문 찾기 - 날짜 포함
+```javascript
+use('log_db');
+
+const items = db.getCollection('logs').find({
+    issued_time: { $gte: new Date('2025-09-04'), $lt: new Date('2025-09-05') },
+    "logs.0.BODY.text": { $regex: '3번 바닷가' }
+}).toArray();
+
+console.log(`items length : ${items.length}`);
+console.log("-------------------------------");
+if (items.length > 0)
+{
+    for (let index = 0; index < items.length; index++) {
+        const element = items[index];        
+        console.log(JSON.stringify(element, null, 2));
+        console.log("-------------------------------");
+    }
+}
+```
+
+## 결과 예
+```
+items length : 2
+-------------------------------
+{
+  "_id": "babf2573b65d4cf390d1da132ab4a362",
+  "bot_id": "10617077",
+  "user_id": "b6dc6f19-8f6d-4fbb-1a1e-06f1452778a2",
+  "issued_time": "2025-09-04T18:15:59.103Z",
+  "logs": [
+    {
+      "WAS": "AI Service",
+      "STEP": "01. Task WAS 메세지큐 수신",
+      "BODY": {
+        "type": "text",
+        "text": "3번 바닷가 위치가 정확하게 어디야?"
+      },
+      "_issued_time": "2025-09-04T18:15:59.103Z",
+      "_duration": 0
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "02. DB 대화이력 조회",
+      "BODY": {
+        "result": "success",
+        "detail": [
+          {
+            "role": "user",
+            "content": "부산 바닷가 3곳 알려주세요"
+          },
+          {
+            "role": "assistent",
+            "content": "부산 바닷가 3곳은 해운대 해수욕장, 광안리 해수욕장, 송도 해수욕장입니다.\n관련내용은 다음과 같습니다.\n\n1. 해운대 해수욕장: 부산의 대표적인 해수욕장으로, 넓은 백사장과 다양한 편의시설을 갖추고 있습니다. 여름철에는 많은 관광객이 찾는 곳입니다.\n2. 광안리 해수욕장: 해운대와 인접한 해수욕장으로, 아름다운 야경과 다양한 해양 스포츠를 즐길 수 있습니다.\n3. 송도 해수욕장: 부산 서쪽에 위치한 해수욕장으로, 깨끗한 바다와 아름다운 경관을 자랑합니다.\n참고자료\n- 5401_언론보도 결과보고.pdf (p.7)\n(NAS 파일다운주소)"
+          }
+        ]
+      },
+      "_issued_time": "2025-09-04T18:15:59.134Z",
+      "_duration": 0.031495
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "03. DB 사용자 질의 저장",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": "2025-09-04T18:15:59.157Z",
+      "_duration": 0.023325
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "04. LLM WAS 의도분석 API 요청",
+      "BODY": {
+        "result": "success",
+        "detail": {
+          "response_code": "C20000",
+          "response_message": "OK",
+          "llm_result": {
+            "answer": "사용자의 질의는 \"3번 바닷가 위치가 정확하게 어디야?\"입니다. 대화이력을 고려하여 의도분석을 진행하면, 이는 이전에 언급된 바닷가 중 하나인 \"송도 해수욕장\"의 위치를 묻는 질의응답 요청으로 판단됩니다.\n\n따라서, 질의의도는 \"질의응답\"이며, 서비스 카테고리는 \"부산시정\"으로 분류됩니다. 검색 문장은 \"송도 해수욕장의 위치를 알려주세요\"로 생성할 수 있습니다.\n\n이를 JSON 포맷으로 표현하면 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```\n\n따라서, 정답은 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```",
+            "finish_resaon": null,
+            "annotations": [],
+            "token_count": 313,
+            "processing_time": 6.69
+          }
+        }
+      },
+      "_issued_time": "2025-09-04T18:16:05.910Z",
+      "_duration": 6.753303
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "05. NAVERWORKS 답변생성중 메세지 발신",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": "2025-09-04T18:16:06.057Z",
+      "_duration": 0.147407
+    }
+  ]
+}
+-------------------------------
+{
+  "_id": "48eb17c0d6e9435bb3c6d4b3cd98f8e5",
+  "bot_id": "10617077",
+  "user_id": "b6dc6f19-8f6d-4fbb-1a1e-06f1452778a2",
+  "issued_time": "2025-09-04T18:38:21.106Z",
+  "logs": [
+    {
+      "WAS": "AI Service",
+      "STEP": "01. Task WAS 메세지큐 수신",
+      "BODY": {
+        "type": "text",
+        "text": "3번 바닷가 위치가 정확하게 어디야?"
+      },
+      "_issued_time": "2025-09-04T18:38:21.106Z",
+      "_duration": 0
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "02. DB 대화이력 조회",
+      "BODY": {
+        "result": "success",
+        "detail": [
+          {
+            "role": "user",
+            "content": "부산 바닷가 3곳 알려주세요"
+          },
+          {
+            "role": "assistent",
+            "content": "부산 바닷가 3곳은 해운대 해수욕장, 광안리 해수욕장, 송도 해수욕장입니다.\n관련내용은 다음과 같습니다.\n\n1. 해운대 해수욕장: 부산의 대표적인 해수욕장으로, 넓은 백사장과 다양한 편의시설을 갖추고 있습니다. 여름철에는 많은 관광객이 찾는 곳입니다.\n2. 광안리 해수욕장: 해운대와 인접한 해수욕장으로, 아름다운 야경과 다양한 해양 스포츠를 즐길 수 있습니다.\n3. 송도 해수욕장: 부산 서쪽에 위치한 해수욕장으로, 깨끗한 바다와 아름다운 경관을 자랑합니다.\n참고자료\n- 5401_언론보도 결과보고.pdf (p.7)\n(NAS 파일다운주소)"
+          }
+        ]
+      },
+      "_issued_time": "2025-09-04T18:38:21.138Z",
+      "_duration": 0.032329
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "03. DB 사용자 질의 저장",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": "2025-09-04T18:38:21.164Z",
+      "_duration": 0.026342
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "04. LLM WAS 의도분석 API 요청",
+      "BODY": {
+        "result": "success",
+        "detail": {
+          "response_code": "C20000",
+          "response_message": "OK",
+          "llm_result": {
+            "answer": "사용자의 질의는 \"3번 바닷가 위치가 정확하게 어디야?\"입니다. 대화이력을 고려하여 의도분석을 진행하면, 이는 이전에 언급된 바닷가 중 하나인 \"송도 해수욕장\"의 위치를 묻는 질의응답 요청으로 판단됩니다.\n\n따라서, 의도분류는 \"질의응답\"에 해당하며, 서비스 카테고리는 \"부산시정\"으로 분류됩니다. 검색 문장은 \"송도 해수욕장의 위치를 알려주세요\"로 생성됩니다.\n\n이를 JSON 포맷으로 표현하면 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```\n\n따라서, 정답은 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```",
+            "finish_resaon": null,
+            "annotations": [],
+            "token_count": 313,
+            "processing_time": 6.67
+          }
+        }
+      },
+      "_issued_time": "2025-09-04T18:38:27.891Z",
+      "_duration": 6.727095
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "05. NAVERWORKS 답변생성중 메세지 발신",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": "2025-09-04T18:38:28.040Z",
+      "_duration": 0.149914
+    }
+  ]
+}
+-------------------------------
+```
+
+- id를 수집하여 다시 id 로 문서를 검색
+
+```javascript
+use('log_db');
+
+const item = db.getCollection('logs').findOne({
+    _id: 'babf2573b65d4cf390d1da132ab4a362'
+});
+
+console.log(JSON.stringify(item, null, 2));
+```
+
+## 결과 예
+```json
+{
+  "_id": "babf2573b65d4cf390d1da132ab4a362",
+  "bot_id": "10617077",
+  "user_id": "b6dc6f19-8f6d-4fbb-1a1e-06f1452778a2",
+  "issued_time": "2025-09-04T18:15:59.103Z",
+  "logs": [
+    {
+      "WAS": "AI Service",
+      "STEP": "01. Task WAS 메세지큐 수신",
+      "BODY": {
+        "type": "text",
+        "text": "3번 바닷가 위치가 정확하게 어디야?"
+      },
+      "_issued_time": "2025-09-04T18:15:59.103Z",
+      "_duration": 0
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "02. DB 대화이력 조회",
+      "BODY": {
+        "result": "success",
+        "detail": [
+          {
+            "role": "user",
+            "content": "부산 바닷가 3곳 알려주세요"
+          },
+          {
+            "role": "assistent",
+            "content": "부산 바닷가 3곳은 해운대 해수욕장, 광안리 해수욕장, 송도 해수욕장입니다.\n관련내용은 다음과 같습니다.\n\n1. 해운대 해수욕장: 부산의 대표적인 해수욕장으로, 넓은 백사장과 다양한 편의시설을 갖추고 있습니다. 여름철에는 많은 관광객이 찾는 곳입니다.\n2. 광안리 해수욕장: 해운대와 인접한 해수욕장으로, 아름다운 야경과 다양한 해양 스포츠를 즐길 수 있습니다.\n3. 송도 해수욕장: 부산 서쪽에 위치한 해수욕장으로, 깨끗한 바다와 아름다운 경관을 자랑합니다.\n참고자료\n- 5401_언론보도 결과보고.pdf (p.7)\n(NAS 파일다운주소)"
+          }
+        ]
+      },
+      "_issued_time": "2025-09-04T18:15:59.134Z",
+      "_duration": 0.031495
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "03. DB 사용자 질의 저장",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": "2025-09-04T18:15:59.157Z",
+      "_duration": 0.023325
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "04. LLM WAS 의도분석 API 요청",
+      "BODY": {
+        "result": "success",
+        "detail": {
+          "response_code": "C20000",
+          "response_message": "OK",
+          "llm_result": {
+            "answer": "사용자의 질의는 \"3번 바닷가 위치가 정확하게 어디야?\"입니다. 대화이력을 고려하여 의도분석을 진행하면, 이는 이전에 언급된 바닷가 중 하나인 \"송도 해수욕장\"의 위치를 묻는 질의응답 요청으로 판단됩니다.\n\n따라서, 질의의도는 \"질의응답\"이며, 서비스 카테고리는 \"부산시정\"으로 분류됩니다. 검색 문장은 \"송도 해수욕장의 위치를 알려주세요\"로 생성할 수 있습니다.\n\n이를 JSON 포맷으로 표현하면 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```\n\n따라서, 정답은 다음과 같습니다:\n\n```json\n{\n  \"intent\": [\n    {\n      \"no\": \"201\",\n      \"intent_name\": \"질의응답\"\n    }\n  ],\n  \"service\": [\n    {\n      \"no\": \"01\",\n      \"category\": \"부산시정\"\n    }\n  ],\n  \"search_query\": [\n    {\n      \"Q1\": \"송도 해수욕장의 위치를 알려주세요\"\n    }\n  ]\n}\n```",
+            "finish_resaon": null,
+            "annotations": [],
+            "token_count": 313,
+            "processing_time": 6.69
+          }
+        }
+      },
+      "_issued_time": "2025-09-04T18:16:05.910Z",
+      "_duration": 6.753303
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "05. NAVERWORKS 답변생성중 메세지 발신",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": "2025-09-04T18:16:06.057Z",
+      "_duration": 0.147407
+    }
+  ]
+}
+
+```
