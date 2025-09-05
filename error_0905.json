@@ -1,0 +1,80 @@
+{
+  "_id": "47912ba678e34a48a1b753c9a8c51307",
+  "bot_id": "10617077",
+  "user_id": "b6dc6f19-8f6d-4fbb-1a1e-06f1452778a2",
+  "issued_time": {
+    "$date": "2025-09-05T12:33:37.650Z"
+  },
+  "logs": [
+    {
+      "WAS": "AI Service",
+      "STEP": "01. Task WAS 메세지큐 수신",
+      "BODY": {
+        "type": "text",
+        "text": "부산 바닷가 3곳 체크해줘"
+      },
+      "_issued_time": {
+        "$date": "2025-09-05T12:33:37.650Z"
+      },
+      "_duration": 0
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "02. DB 대화이력 조회",
+      "BODY": {
+        "result": "success",
+        "detail": []
+      },
+      "_issued_time": {
+        "$date": "2025-09-05T12:33:37.692Z"
+      },
+      "_duration": 0.042435
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "03. DB 사용자 질의 저장",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": {
+        "$date": "2025-09-05T12:33:37.735Z"
+      },
+      "_duration": 0.043669
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "04. LLM WAS 의도분석 API 요청",
+      "BODY": {
+        "result": "success",
+        "detail": {
+          "response_code": "C20000",
+          "response_message": "OK",
+          "llm_result": {
+            "answer": "{ \"intent\": [ { \"no\": \"201\", \"intent_name\": \"질의응답\" } ], \"service\": [ { \"no\": \"01\", \"category\": \"부산시정\" } ], \"search_query\": [ { \"Q1\": \"부산 바닷가 3곳을 알려주세요\" } ] }",
+            "finish_resaon": null,
+            "annotations": [],
+            "token_count": 69,
+            "processing_time": 1.63
+          }
+        }
+      },
+      "_issued_time": {
+        "$date": "2025-09-05T12:33:39.462Z"
+      },
+      "_duration": 1.72735
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "05. NAVERWORKS 답변생성중 메세지 발신",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": {
+        "$date": "2025-09-05T12:33:39.754Z"
+      },
+      "_duration": 0.292187
+    }
+  ]
+}
