@@ -6,15 +6,14 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <style>
       :root {
-        color-scheme: light dark;
         font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
           sans-serif;
       }
       body {
         margin: 0;
         padding: 0;
-        background: #0d1117;
-        color: #e6edf3;
+        background: #f7f1ea;
+        color: #2f2a25;
       }
       main {
         max-width: 960px;
@@ -24,44 +23,50 @@
       h1 {
         margin-bottom: 0.5rem;
         font-size: 1.8rem;
+        color: #a0532b;
       }
       p.lead {
-        color: #9da4b1;
+        color: #7a6a5e;
         margin-top: 0;
         margin-bottom: 1.5rem;
       }
       form {
         display: grid;
         gap: 16px;
-        background: #161b22;
+        background: #fff8f2;
         padding: 24px;
-        border-radius: 12px;
-        border: 1px solid #30363d;
+        border-radius: 16px;
+        border: 1px solid #e6d4c6;
+        box-shadow: 0 8px 24px rgba(214, 188, 167, 0.35);
       }
       label {
         display: flex;
         flex-direction: column;
         gap: 6px;
-        font-size: 0.92rem;
+        font-size: 0.95rem;
+        color: #4a3d34;
       }
       input,
       select,
       textarea {
-        background: #0d1117;
-        color: #e6edf3;
-        border: 1px solid #30363d;
-        border-radius: 8px;
-        padding: 8px 10px;
+        background: #fffefd;
+        color: #2f2a25;
+        border: 1px solid #dec8b7;
+        border-radius: 10px;
+        padding: 9px 12px;
         font-size: 0.95rem;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
       }
       input:focus,
       select:focus,
       textarea:focus {
-        outline: 2px solid #4e9bff;
-        border-color: #4e9bff;
+        outline: none;
+        border-color: #f39c6b;
+        box-shadow: 0 0 0 2px rgba(243, 156, 107, 0.25);
       }
       textarea {
         min-height: 72px;
+        resize: vertical;
       }
       .inline {
         display: flex;
@@ -77,28 +82,32 @@
         margin: 0;
         font-size: 1.1rem;
         font-weight: 600;
+        color: #a0532b;
       }
       .group {
-        border: 1px solid #30363d;
-        border-radius: 10px;
+        border: 1px solid #ead8c8;
+        border-radius: 14px;
         padding: 16px;
         display: grid;
         gap: 12px;
+        background: #fffdf9;
       }
       .cards-section {
-        border: 1px solid #30363d;
-        border-radius: 12px;
-        padding: 20px;
-        background: #11151c;
+        border: 1px solid #ead8c8;
+        border-radius: 18px;
+        padding: 22px;
+        background: #fff9f3;
         margin-top: 32px;
         display: grid;
         gap: 12px;
+        box-shadow: 0 12px 32px rgba(191, 155, 126, 0.25);
       }
       details.accordion {
-        border: 1px solid #30363d;
-        border-radius: 12px;
+        border: 1px solid #ead0c0;
+        border-radius: 16px;
         overflow: hidden;
-        background: #161b22;
+        background: #fff4ec;
+        box-shadow: 0 6px 18px rgba(188, 147, 120, 0.2);
       }
       details.accordion + details.accordion,
       details.accordion + .cards-section,
@@ -113,11 +122,12 @@
         display: flex;
         justify-content: space-between;
         align-items: center;
+        color: #a0532b;
       }
       details.accordion summary::after {
         content: "열기";
         font-size: 0.85rem;
-        color: #9da4b1;
+        color: #c07a52;
       }
       details.accordion[open] summary::after {
         content: "닫기";
@@ -131,27 +141,33 @@
         gap: 16px;
       }
       .chip-button {
-        background: #238636;
+        background: #f39c6b;
         border: none;
         color: #fff;
-        padding: 10px 16px;
+        padding: 10px 18px;
         border-radius: 999px;
         font-weight: 600;
         cursor: pointer;
-        transition: opacity 0.15s ease;
+        transition: transform 0.15s ease, box-shadow 0.15s ease,
+          opacity 0.15s ease;
+        box-shadow: 0 10px 18px rgba(243, 156, 107, 0.35);
       }
       .chip-button.secondary {
-        background: #30363d;
+        background: #d6c3b5;
+        color: #4a3d34;
+        box-shadow: none;
       }
       .chip-button:disabled {
         opacity: 0.5;
         cursor: not-allowed;
       }
       .chip-button:hover:not(:disabled) {
-        opacity: 0.9;
+        transform: translateY(-1px);
+        box-shadow: 0 12px 22px rgba(243, 156, 107, 0.5);
       }
       .danger {
-        background: #da3633;
+        background: #d46f58;
+        box-shadow: 0 10px 18px rgba(212, 111, 88, 0.35);
       }
       .list-stack {
         display: flex;
@@ -169,15 +185,16 @@
         flex: 1;
       }
       pre {
-        background: #0d1117;
-        border-radius: 10px;
+        background: #f3ebe3;
+        border-radius: 14px;
         padding: 16px;
-        border: 1px solid #30363d;
+        border: 1px solid #e2d2c4;
         overflow-x: auto;
         white-space: pre-wrap;
+        color: #3d332b;
       }
       .muted {
-        color: #9da4b1;
+        color: #8a7a6c;
         font-size: 0.9rem;
       }
       .results-grid {
@@ -187,13 +204,14 @@
         margin-top: 12px;
       }
       .result-group {
-        border: 1px solid #30363d;
-        border-radius: 12px;
+        border: 1px solid #edd7c9;
+        border-radius: 16px;
         padding: 16px;
-        background: #11151c;
+        background: #fffdf8;
         display: flex;
         flex-direction: column;
         gap: 12px;
+        box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.4);
       }
       .result-group__header {
         display: flex;
@@ -204,26 +222,28 @@
         font-size: 0.78rem;
         letter-spacing: 0.04em;
         text-transform: uppercase;
-        color: #6e7681;
+        color: #b58c74;
       }
       .result-group__header .query-text {
         font-size: 1.05rem;
         font-weight: 600;
       }
       .doc-card {
-        border: 1px solid #232933;
-        border-radius: 10px;
-        padding: 14px;
-        background: #0d1117;
+        border: 1px solid #f0ded0;
+        border-radius: 14px;
+        padding: 16px;
+        background: #ffffff;
         display: flex;
         flex-direction: column;
         gap: 12px;
+        box-shadow: 0 8px 18px rgba(200, 156, 124, 0.18);
       }
       .doc-card__header {
         display: flex;
         justify-content: space-between;
         gap: 12px;
         align-items: center;
+        flex-wrap: wrap;
       }
       .doc-card__title {
         display: flex;
@@ -236,18 +256,19 @@
         align-items: center;
         justify-content: center;
         font-size: 0.75rem;
-        background: #30363d;
-        color: #e6edf3;
+        background: #fde7da;
+        color: #b45b33;
         border-radius: 999px;
-        padding: 2px 10px;
+        padding: 2px 12px;
       }
       .doc-card__id {
         font-weight: 600;
         word-break: break-all;
+        color: #4a3d34;
       }
       .doc-card__score {
         font-size: 0.9rem;
-        color: #8dd16a;
+        color: #b45b33;
         font-weight: 600;
         white-space: nowrap;
       }
@@ -258,13 +279,14 @@
         margin: 0;
       }
       .meta-list dt {
-        color: #9da4b1;
-        font-size: 0.83rem;
+        color: #a17e67;
+        font-size: 0.85rem;
       }
       .meta-list dd {
         margin: 0;
-        font-size: 0.9rem;
+        font-size: 0.92rem;
         word-break: break-word;
+        color: #3f332b;
       }
       .service-chips {
         display: flex;
@@ -273,15 +295,17 @@
       }
       .chip {
         border-radius: 999px;
-        border: 1px solid #30363d;
-        padding: 2px 10px;
+        border: 1px solid #f2d5c4;
+        padding: 3px 12px;
         font-size: 0.78rem;
+        background: #fff4ed;
+        color: #a0532b;
       }
       .text-panel {
-        border: 1px solid #1f242d;
-        border-radius: 10px;
+        border: 1px solid #f0dbc9;
+        border-radius: 12px;
         padding: 12px;
-        background: #050608;
+        background: #fffaf5;
       }
       .text-panel + .text-panel {
         margin-top: 10px;
@@ -297,6 +321,7 @@
       .text-panel__header h4 {
         margin: 0;
         font-size: 1rem;
+        color: #b45b33;
       }
       .text-panel__controls {
         display: flex;
@@ -304,9 +329,9 @@
         flex-wrap: wrap;
       }
       .pill-button {
-        border: 1px solid #30363d;
+        border: 1px solid #eac9b3;
         background: transparent;
-        color: #e6edf3;
+        color: #b45b33;
         border-radius: 999px;
         padding: 4px 12px;
         font-size: 0.8rem;
@@ -319,29 +344,30 @@
         padding: 4px 10px;
       }
       .pill-button.secondary {
-        background: #30363d;
+        background: #fbe7da;
       }
       .pill-button.active {
-        background: #4e9bff;
-        border-color: #4e9bff;
-        color: #050608;
+        background: #f7c7a4;
+        border-color: #f7c7a4;
+        color: #4a3d34;
       }
       .pill-button:disabled {
         opacity: 0.6;
         cursor: not-allowed;
       }
       .text-panel__body {
-        border: 1px solid #1f242d;
-        border-radius: 8px;
+        border: 1px solid #f1e0d2;
+        border-radius: 10px;
         min-height: 80px;
-        background: #0d1117;
+        background: #fffefc;
       }
       .text-panel__content {
         margin: 0;
         padding: 10px;
-        font-size: 0.92rem;
+        font-size: 0.95rem;
         max-height: 320px;
         overflow-y: auto;
+        color: #3d2f28;
       }
       .text-panel__content pre {
         background: none;
@@ -353,7 +379,7 @@
         display: none;
       }
       a.file-link {
-        color: #4e9bff;
+        color: #c45a58;
         text-decoration: none;
         word-break: break-all;
       }
@@ -363,7 +389,7 @@
       #status {
         min-height: 1.2em;
         font-size: 0.9rem;
-        color: #9da4b1;
+        color: #8a7a6c;
       }
       @media (max-width: 640px) {
         form {
@@ -493,14 +519,14 @@
               <p class="section-title">Reranking</p>
               <div class="inline">
                 <label class="inline-choice">
-                  <input type="checkbox" name="rerank_active" checked />
+                  <input type="checkbox" name="rerank_active" />
                   is_active
                 </label>
                 <label>
                   target
                   <select name="rerank_target">
                     <option value="">(default)</option>
-                    <option value="text" selected>text</option>
+                    <option value="text">text</option>
                     <option value="parent_text">parent_text</option>
                   </select>
                 </label>
