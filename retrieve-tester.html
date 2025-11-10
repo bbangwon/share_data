@@ -7,7 +7,8 @@
     <style>
       :root {
         color-scheme: light dark;
-        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont, sans-serif;
+        font-family: "Segoe UI", system-ui, -apple-system, BlinkMacSystemFont,
+          sans-serif;
       }
       body {
         margin: 0;
@@ -310,7 +311,8 @@
         padding: 4px 12px;
         font-size: 0.8rem;
         cursor: pointer;
-        transition: background 0.15s ease, color 0.15s ease, border-color 0.15s ease;
+        transition: background 0.15s ease, color 0.15s ease,
+          border-color 0.15s ease;
       }
       .pill-button.small {
         font-size: 0.75rem;
@@ -378,7 +380,8 @@
     <main>
       <h1>/retrieve 라우터 테스트</h1>
       <p class="lead">
-        Qdrant 검색 API에 보낼 JSON 페이로드를 손쉽게 조정해 보고, 응답을 확인하세요.
+        Qdrant 검색 API에 보낼 JSON 페이로드를 손쉽게 조정해 보고, 응답을
+        확인하세요.
       </p>
       <form id="retrieveForm">
         <details class="accordion options-accordion">
@@ -389,7 +392,7 @@
               <input
                 name="endpoint"
                 type="url"
-                value="http://localhost:8000/api/v1/qdrant/retrieve"
+                value="http://99.1.82.184:28080/api/v1/qdrant/retrieve"
                 required
               />
             </label>
@@ -399,7 +402,10 @@
               <div class="inline">
                 <label>
                   Collection Name
-                  <input name="collection_name" placeholder="default: settings.COLLECTION_NAME" />
+                  <input
+                    name="collection_name"
+                    placeholder="default: settings.COLLECTION_NAME"
+                  />
                 </label>
                 <label>
                   Retrieve Type
@@ -414,15 +420,33 @@
               <div class="inline">
                 <label>
                   Dense Limit
-                  <input name="dense_limit" type="number" min="1" max="500" placeholder="ex) 20" />
+                  <input
+                    name="dense_limit"
+                    type="number"
+                    min="1"
+                    max="500"
+                    placeholder="ex) 100"
+                  />
                 </label>
                 <label>
                   Sparse Limit
-                  <input name="sparse_limit" type="number" min="1" max="500" placeholder="ex) 20" />
+                  <input
+                    name="sparse_limit"
+                    type="number"
+                    min="1"
+                    max="500"
+                    placeholder="ex) 100"
+                  />
                 </label>
                 <label>
                   Final Limit
-                  <input name="final_limit" type="number" min="1" max="50" placeholder="ex) 10" />
+                  <input
+                    name="final_limit"
+                    type="number"
+                    min="1"
+                    max="50"
+                    placeholder="ex) 5"
+                  />
                 </label>
               </div>
             </div>
@@ -440,7 +464,10 @@
                 </label>
                 <label>
                   Name
-                  <input name="dense_name" placeholder="예: bge-m3" />
+                  <input
+                    name="dense_name"
+                    placeholder="예: jina_v3_dense_vector"
+                  />
                 </label>
               </div>
             </div>
@@ -457,7 +484,7 @@
                 </label>
                 <label>
                   Name
-                  <input name="sparse_name" placeholder="예: bm25" />
+                  <input name="sparse_name" placeholder="예: kiwi_bm25" />
                 </label>
               </div>
             </div>
@@ -466,14 +493,14 @@
               <p class="section-title">Reranking</p>
               <div class="inline">
                 <label class="inline-choice">
-                  <input type="checkbox" name="rerank_active" />
+                  <input type="checkbox" name="rerank_active" checked />
                   is_active
                 </label>
                 <label>
                   target
                   <select name="rerank_target">
                     <option value="">(default)</option>
-                    <option value="text">text</option>
+                    <option value="text" selected>text</option>
                     <option value="parent_text">parent_text</option>
                   </select>
                 </label>
@@ -487,7 +514,11 @@
             <div class="group">
               <div class="section-title">필터 (선택)</div>
               <div id="filtersContainer" class="list-stack"></div>
-              <button type="button" class="chip-button secondary" id="addFilterButton">
+              <button
+                type="button"
+                class="chip-button secondary"
+                id="addFilterButton"
+              >
                 + 필터 추가
               </button>
             </div>
@@ -497,7 +528,11 @@
         <div class="group">
           <div class="section-title">질의 목록</div>
           <div id="queriesContainer" class="list-stack"></div>
-          <button type="button" class="chip-button secondary" id="addQueryButton">
+          <button
+            type="button"
+            class="chip-button secondary"
+            id="addQueryButton"
+          >
             + 질의 추가
           </button>
         </div>
@@ -529,6 +564,7 @@
     </main>
 
     <script>
+      const FILE_DOWNLOAD_BASE_URL = "https://busanai.busan.go.kr/download/";
       const queriesContainer = document.getElementById("queriesContainer");
       const filtersContainer = document.getElementById("filtersContainer");
       const addQueryButton = document.getElementById("addQueryButton");
@@ -578,7 +614,9 @@
         removeBtn.type = "button";
         removeBtn.textContent = "삭제";
         removeBtn.className = "chip-button danger";
-        removeBtn.addEventListener("click", () => filtersContainer.removeChild(row));
+        removeBtn.addEventListener("click", () =>
+          filtersContainer.removeChild(row)
+        );
 
         row.append(keyInput, valuesInput, removeBtn);
         filtersContainer.appendChild(row);
@@ -589,7 +627,8 @@
       addQueryField();
 
       function parseNumber(value) {
-        if (value === "" || value === null || value === undefined) return undefined;
+        if (value === "" || value === null || value === undefined)
+          return undefined;
         const num = Number(value);
         return Number.isFinite(num) ? num : undefined;
       }
@@ -703,7 +742,10 @@
             renderResponseCards(parsed);
           } catch {
             responseOutput.textContent = text || "(빈 응답)";
-            renderResponseCards(null, "JSON 응답이 아니어서 카드로 표시할 수 없습니다.");
+            renderResponseCards(
+              null,
+              "JSON 응답이 아니어서 카드로 표시할 수 없습니다."
+            );
           }
 
           if (!response.ok) {
@@ -714,7 +756,10 @@
         } catch (error) {
           setStatus(`요청 실패: ${error.message}`, true);
           responseOutput.textContent = "네트워크 에러가 발생했습니다.";
-          renderResponseCards(null, "네트워크 에러로 결과를 불러오지 못했습니다.");
+          renderResponseCards(
+            null,
+            "네트워크 에러로 결과를 불러오지 못했습니다."
+          );
         }
       });
 
@@ -831,12 +876,14 @@
 
       function createFileLink(filePath) {
         if (!filePath) return document.createTextNode("-");
+        const encodedPath = encodeURIComponent(filePath);
         const link = document.createElement("a");
-        link.href = filePath;
+        link.href = `${FILE_DOWNLOAD_BASE_URL}${encodedPath}`;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.className = "file-link";
         link.textContent = filePath.split("/").pop() || filePath;
+        link.title = filePath;
         return link;
       }
 
