@@ -1,0 +1,143 @@
+[{
+  "_id": "dda73160c76e4434bde5aa69b7db75d2",
+  "bot_id": "test_bot",
+  "user_id": "test_user_10",
+  "issued_time": {
+    "$date": "2025-11-18T13:03:20.482Z"
+  },
+  "total_duration": 12.921672,
+  "logs": [
+    {
+      "WAS": "AI Service",
+      "STEP": "01. Task WAS 메세지큐 수신",
+      "BODY": {
+        "type": "text",
+        "text": "시 본청 당직시 주의사항에 대해서 알려줘"
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:20.482Z"
+      },
+      "_duration": 0
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "02. DB 대화이력 조회",
+      "BODY": {
+        "result": "success",
+        "detail": [
+          {
+            "role": "user",
+            "content": "일반지출이 아닌 계약으로 진행해야 하는 기준과 필요 서류들이 무엇이 있는지?"
+          },
+          {
+            "role": "assistant",
+            "content": "일반 지출이 아닌 계약으로 진행해야 하는 경우는 주로 법령이나 지침에 의해 정해진 금액 이상일 때나 특정 업무의 성격상 계약이 필요한 경우에 해당됩니다. 이러한 경우에는 적절한 절차를 거쳐 계약을 체결해야 하며, 이를 위해 필요한 서류들을 준비해야 합니다.\n\n**계약으로 진행해야 하는 기준**\n\n1. **법령상의 기준**: 지방계약법 등에 따르면 일정 금액 이상의 거래는 반드시 계약을 통해 이루어져야 합니다. 예를 들어, 공사와 관련된 계약은 일반적으로 일정 규모 이상이 되면 계약이 필요합니다.\n\n2. **업무의 특성**: 대규모 프로젝트나 복잡한 서비스 제공 등은 계약 없이 진행하기 어렵습니다. 이는 책임 소재를 명확히 하고 분쟁을 예방하기 위해서입니다.\n\n**필요한 서류들**\n\n계약을 체결하기 위해서는 다음과 같은 서류들이 필요합니다:\n\n1. **품의서/계획서**: 예산 사용의 타당성과 계획을 상부에 보고하는 문서입니다.\n\n2. **계약서**: 계약당사자 간에 합의한 내용을 담은 공식 문서로, 양측의 서명이나 날인이 포함되어야 합니다.\n\n3. **입찰유의서**: 입찰 과정에서 유의해야 할 사항들을 정리한 문서입니다.\n\n4. **계약 일반조건 및 특수조건**: 계약의 일반적인 조건과 특별한 조건을 명시한 문서입니다.\n\n5. **설계서/규격서**: 제품이나 서비스의 요구 사항을 상세하게 기술한 문서입니다.\n\n6. **착공·준공신고서**: 공사가 시작되고 완료되었음을 알리는 문서입니다.\n\n7. **감독조서/검사·검수조서**: 공사나 서비스의 진행 상황을 감독하고 확인하는 문서입니다.\n\n8. **입찰·계약·하자·선금 보증서**: 계약 이행에 대한 보증을 제공하는 문서입니다.\n\n9. **정부수입인지**: 세금 납부 증명을 위한 인지가 부착된 문서입니다.\n\n10. **지역개발공채 매입필증 등**: 지역에 특화된 채권 구매 증명서 등이 필요할 수 있습니다.\n\n11. **하도급계약서 사본**: 하도급 업체와의 계약 관계를 나타내는 문서입니다.\n\n12. **하도급대금 직불합의서**: 하도급 대금의 직접 지불에 대한 합의를 나타냅니다.\n\n13. **공동계약이행계획서**: 여러 업체가 공동으로 참여하는 계약의 실행 계획을 담은 문서입니다.\n\n14. **근로자 안전관련 계획서**: 작업자의 안전을 보장하기 위한 계획서입니다.\n\n15. **수의계약 체결제한여부 확인서**: 경쟁 입찰 대신 수의계약을 체결할 수 있는지를 확인하는 문서입니다.\n\n16. **그 밖의 계약이행에 필요한 서류**: 계약의 성격에 따라 추가로 필요한 모든 문서들입니다.\n\n이러한 서류들은 계약의 투명성, 신뢰성, 법적 효력을 확보하기 위해 필수적으로 준비되어야 합니다. 또한, 계약 절차는 관련 법령과 규정을 철저히 준수하여 진행되어야 하며, 필요한 경우 전문가의 조언을 구하는 것이 좋습니다. 추가적인 도움이 필요하시면 언제든지 말씀해 주세요!\n\n📌 참고링크\nㆍ478_2505_회계재산담당관_업무매뉴얼_회계재산담당관_계약업무_참고자료회계재산담당관외부용.pdf (p.10)\nhttps://busanai.busan.go.kr/download/478_2505_회계재산담당관_업무매뉴얼_회계재산담당관_계약업무_참고자료회계재산담당관외부용.pdf\nㆍ472_2411_회계재산담당관_업무매뉴얼_한국지방재정공제회_2024년_개정판_물품계약_길라잡이한국지방재정공제회.pdf (p.260)\nhttps://busanai.busan.go.kr/download/472_2411_회계재산담당관_업무매뉴얼_한국지방재정공제회_2024년_개정판_물품계약_길라잡이한국지방재정공제회.pdf"
+          }
+        ]
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:20.529Z"
+      },
+      "_duration": 0.047973
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "03. DB 사용자 질의 저장",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:20.558Z"
+      },
+      "_duration": 0.029085
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "04. NAVERWORKS 답변생성중 메세지 발신",
+      "BODY": {
+        "result": "success",
+        "detail": null
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:20.598Z"
+      },
+      "_duration": 0.040278
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "05_01. LLM WAS 의도분석 API 요청",
+      "BODY": {
+        "result": "success",
+        "detail": {
+          "response_code": "C20000",
+          "response_message": "OK",
+          "llm_result": {
+            "answer": "{\"intent\": {\"no\": \"201\", \"intent_name\": \"질의응답\"}}",
+            "finish_reason": "stop",
+            "annotations": [],
+            "token_count": 22,
+            "processing_time": 0.34
+          }
+        }
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:21.002Z"
+      },
+      "_duration": 0.404525
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "05_02. 의도분석 API 요청 결과 파싱",
+      "BODY": {
+        "result": "success",
+        "detail": {
+          "no": "201",
+          "intent_name": "질의응답"
+        }
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:21.026Z"
+      },
+      "_duration": 0.024053
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "06_01. LLM WAS 질의확장 API 요청",
+      "BODY": {
+        "result": "success",
+        "detail": {
+          "response_code": "C20000",
+          "response_message": "OK",
+          "llm_result": {
+            "answer": "{ \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t       \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t               \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\n\n\n\n\n\n\n\n\n  \t\t\t                          \"query_complete\"\n\n\n\n\n  :\"\"\n\n \n\n    \t\t\t\t\t         \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t , \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n\n \n \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\n\n\n\n\n\n\n\n\n\n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t                          \t\t     \t\t \t\t \t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t                         \t \t\t\t\t\t\t\t\t\t\t\t\t \"search_queries\"\n \t\n  \t\t\t\t\t   \n   \n  \n  \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t    \n\t  \n\t  \n\t  \n\t  \n\t  \n\t  \n\t  \n\t  \n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n  \n         \n \n \n \n \n \n \n \n \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t     :\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t    \t\t\t\t\t\t\t\t\t\t\t\t\t\t                         [ \"-\"]       \t\t \t\t \t\t \t\t        \t\t\t\t\t\t\t\t\t\t\t \t\t    \n\n \t\t \t\t \t\t \t\t \t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t             \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t \t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t  \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n    \t\n \n  \n  \n  \n  \t\t\t\t  \n  \n\t\n    \n\t  \n\t  \n\t\n\t\n\t\n\t\n\t\t\n  \n\t\n  \n  \n  \n  \n                        \n  \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n  \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n    \n    \n    \n  \n\t\n\t\n\t\n  \n  \n\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n    \n         \n  \n\n   \n  \n  \n  \n  \n  \n  \n  \n\n\n\n\n\t\n\t\n  \n\n\n\n\t\n  \n\t\n \n  \n  \n\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t\n\t}",
+            "finish_reason": "stop",
+            "annotations": [],
+            "token_count": 809,
+            "processing_time": 12.16
+          }
+        }
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:33.377Z"
+      },
+      "_duration": 12.351417
+    },
+    {
+      "WAS": "AI Service",
+      "STEP": "06_02. 질의확장 API 요청 결과 파싱",
+      "BODY": {
+        "result": "success",
+        "detail": [
+          "시 본청 당직시 주의사항에 대해서 알려줘",
+          "",
+          "-"
+        ]
+      },
+      "_issued_time": {
+        "$date": "2025-11-18T13:03:33.401Z"
+      },
+      "_duration": 0.024341
+    }
+  ]
+}]
