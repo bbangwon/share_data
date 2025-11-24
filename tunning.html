@@ -215,7 +215,7 @@
           <div class="row two">
             <label>
               API Base URL
-              <input id="apiBase" type="text" required />
+              <input id="apiBase" type="text" value="http://99.1.82.169:28080/api/v1/qdrant" required />
             </label>
             <label>
               Collection Name
@@ -223,6 +223,7 @@
                 id="collectionName"
                 type="text"
                 placeholder="ex) your_collection"
+                value="BusanCity"
                 required
               />
             </label>
@@ -317,12 +318,6 @@
       const boostKeywordsInput = document.getElementById("boostKeywords");
       const tuneStatus = document.getElementById("tuneStatus");
       const tuneBtn = document.getElementById("tuneBtn");
-
-      const defaultApiBase = new URL(
-        "/api/v1/qdrant",
-        window.location.origin
-      ).href.replace(/\$/, "");
-      apiBaseInput.value = defaultApiBase;
 
       const state = {
         points: [],
