@@ -197,6 +197,95 @@
         color: #0f766e;
         font-weight: 700;
       }
+      .meta-grid {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+        gap: 8px;
+      }
+      .meta-item {
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: #fff;
+      }
+      .meta-item .meta-label {
+        font-size: 12px;
+        color: var(--muted);
+        margin-bottom: 4px;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .meta-item .meta-value {
+        font-weight: 700;
+        color: var(--text);
+        word-break: break-word;
+      }
+      .text-block {
+        border: 1px solid var(--border);
+        border-radius: 10px;
+        padding: 10px 12px;
+        background: #fff;
+        display: grid;
+        gap: 8px;
+      }
+      .text-block__header {
+        display: flex;
+        align-items: center;
+        justify-content: space-between;
+        gap: 10px;
+        flex-wrap: wrap;
+      }
+      .text-block__title {
+        font-weight: 700;
+        color: var(--text);
+      }
+      .view-buttons {
+        display: flex;
+        gap: 6px;
+        flex-wrap: wrap;
+      }
+      .view-btn {
+        border: 1px solid var(--border);
+        background: #f8fafc;
+        color: var(--text);
+        padding: 6px 10px;
+        border-radius: 7px;
+        cursor: pointer;
+        font-weight: 600;
+        transition: all 0.15s ease;
+      }
+      .view-btn:hover {
+        border-color: var(--accent);
+        color: var(--accent-strong);
+      }
+      .view-btn.is-active {
+        background: #e2f3f0;
+        border-color: var(--accent);
+        color: var(--accent-strong);
+      }
+      .text-block__body {
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 10px;
+        background: #f8fafc;
+        min-height: 60px;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .payload-details {
+        border: 1px dashed var(--border);
+        border-radius: 8px;
+        padding: 8px 10px;
+        background: #fff;
+      }
+      .payload-details summary {
+        cursor: pointer;
+        font-weight: 700;
+        color: var(--accent-strong);
+      }
+      .payload-details[open] summary {
+        margin-bottom: 8px;
+      }
     </style>
   </head>
   <body>
@@ -459,6 +548,59 @@
         }
       });
 
+      function escapeHTML(str) {
+        return (str || "").replace(
+          /[&<>"']/g,
+          (ch) =>
+            ({
+              "&": "&amp;",
+              "<": "&lt;",
+              ">": "&gt;",
+              '"': "&quot;",
+              "'": "&#39;",
+            }[ch] || ch)
+        );
+      }
+
+      function formatBoostKeywords(value) {
+        if (Array.isArray(value)) {
+          return value.length ? value.join(", ") : "-";
+        }
+        return value || "-";
+      }
+
+      function setTextBody(el, mode) {
+        const raw = el.dataset.raw || "";
+        el.dataset.mode = mode;
+        if (mode === "html") {
+          el.innerHTML = raw || '<span class="muted">내용 없음</span>';
+        } else {
+          el.textContent = raw || "내용 없음";
+        }
+      }
+
+      function setActiveButtons(container, targetId, mode) {
+        container
+          .querySelectorAll(`[data-target="${targetId}"][data-mode]`)
+          .forEach((btn) => {
+            btn.classList.toggle("is-active", btn.dataset.mode === mode);
+          });
+      }
+
+      async function copyText(text) {
+        try {
+          await navigator.clipboard.writeText(text || "");
+        } catch (err) {
+          console.error("Copy failed", err);
+          const textarea = document.createElement("textarea");
+          textarea.value = text || "";
+          document.body.appendChild(textarea);
+          textarea.select();
+          document.execCommand("copy");
+          document.body.removeChild(textarea);
+        }
+      }
+
       function renderPoints(points) {
         pointsContainer.innerHTML = "";
         if (!points.length) {
@@ -467,9 +609,23 @@
           return;
         }
         points.forEach((p, idx) => {
+          const payload = p.payload || {};
           const div = document.createElement("div");
           div.className = "point";
-          const payloadText = JSON.stringify(p.payload || {}, null, 2);
+          const payloadText = JSON.stringify(payload, null, 2);
+          const parentText = payload.parent_text || "";
+          const chunkText = payload.text || "";
+          const service = payload.service || "-";
+          const group = payload.group || "-";
+          const boostKeywords = formatBoostKeywords(payload.boost_keywords);
+          const filePath = payload.file_path || "-";
+          const pageNum =
+            payload.page_num === 0 || payload.page_num
+              ? String(payload.page_num)
+              : "-";
+
+          const parentId = `parent-${p.id}-${idx}`;
+          const textId = `text-${p.id}-${idx}`;
           div.innerHTML = `
             <header>
               <div class="actions">
@@ -481,7 +637,54 @@
               </div>
               <div class="muted">score: ${p.score ?? "n/a"}</div>
             </header>
-            <div class="payload">${payloadText}</div>
+            <div class="meta-grid">
+              <div class="meta-item">
+                <div class="meta-label">Service</div>
+                <div class="meta-value">${escapeHTML(service)}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Group</div>
+                <div class="meta-value">${escapeHTML(group)}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Boost Keywords</div>
+                <div class="meta-value">${escapeHTML(boostKeywords)}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">File Path</div>
+                <div class="meta-value">${escapeHTML(filePath)}</div>
+              </div>
+              <div class="meta-item">
+                <div class="meta-label">Page Num</div>
+                <div class="meta-value">${escapeHTML(pageNum)}</div>
+              </div>
+            </div>
+            <div class="text-block">
+              <div class="text-block__header">
+                <div class="text-block__title">Parent Text</div>
+                <div class="view-buttons">
+                  <button type="button" class="view-btn" data-target="${parentId}" data-mode="html">HTML 보기</button>
+                  <button type="button" class="view-btn" data-target="${parentId}" data-mode="raw">원본 보기</button>
+                  <button type="button" class="view-btn" data-target="${parentId}" data-action="copy">복사하기</button>
+                </div>
+              </div>
+              <div class="text-block__body" data-content="${parentId}"></div>
+            </div>
+            <div class="text-block">
+              <div class="text-block__header">
+                <div class="text-block__title">Text</div>
+                <div class="view-buttons">
+                  <button type="button" class="view-btn" data-target="${textId}" data-mode="html">HTML 보기</button>
+                  <button type="button" class="view-btn" data-target="${textId}" data-mode="raw">원본 보기</button>
+                  <button type="button" class="view-btn" data-target="${textId}" data-action="copy">복사하기</button>
+                </div>
+              </div>
+              <div class="text-block__body" data-content="${textId}"></div>
+            </div>
+            <details class="payload-details">
+              <summary>원본 payload 보기</summary>
+              <pre class="payload"></pre>
+            </details>
           `;
           const checkbox = div.querySelector("input[type='checkbox']");
           checkbox.checked = state.selected.has(p.id);
@@ -493,6 +696,43 @@
             }
             syncSelectionUI();
           });
+          const parentBody = div.querySelector(`[data-content="${parentId}"]`);
+          const textBody = div.querySelector(`[data-content="${textId}"]`);
+          parentBody.dataset.raw = parentText;
+          textBody.dataset.raw = chunkText;
+          setTextBody(parentBody, "html");
+          setTextBody(textBody, "html");
+          setActiveButtons(div, parentId, "html");
+          setActiveButtons(div, textId, "html");
+
+          div.querySelectorAll(`[data-target="${parentId}"]`).forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const action = btn.dataset.action;
+              if (action === "copy") {
+                copyText(parentBody.dataset.raw || "");
+                return;
+              }
+              const mode = btn.dataset.mode || "raw";
+              setTextBody(parentBody, mode);
+              setActiveButtons(div, parentId, mode);
+            });
+          });
+
+          div.querySelectorAll(`[data-target="${textId}"]`).forEach((btn) => {
+            btn.addEventListener("click", () => {
+              const action = btn.dataset.action;
+              if (action === "copy") {
+                copyText(textBody.dataset.raw || "");
+                return;
+              }
+              const mode = btn.dataset.mode || "raw";
+              setTextBody(textBody, mode);
+              setActiveButtons(div, textId, mode);
+            });
+          });
+
+          const payloadPre = div.querySelector("pre.payload");
+          payloadPre.textContent = payloadText;
           pointsContainer.appendChild(div);
         });
       }
