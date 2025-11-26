@@ -429,7 +429,7 @@
               <input
                 name="endpoint"
                 type="url"
-                value="http://99.1.82.184:28080/api/v1/qdrant/retrieve"
+                value="http://99.1.82.169:28080/api/v1/qdrant/retrieve"
                 required
               />
             </label>
@@ -530,14 +530,14 @@
               <p class="section-title">Reranking</p>
               <div class="inline">
                 <label class="inline-choice">
-                  <input type="checkbox" name="rerank_active" />
+                  <input type="checkbox" name="rerank_active" checked />
                   is_active
                 </label>
                 <label>
                   target
                   <select name="rerank_target">
                     <option value="">(default)</option>
-                    <option value="text">text</option>
+                    <option value="text" selected>text</option>
                     <option value="parent_text">parent_text</option>
                   </select>
                 </label>
@@ -587,9 +587,10 @@
               id="scoreFilterInput"
               type="number"
               step="0.0001"
-              placeholder="예) 0.25"
+              placeholder="예) 0.7"
               min="0"
               max="1"
+              value="0.7"
             />
           </label>
         </div>
@@ -790,6 +791,7 @@
           let parsed;
           try {
             parsed = JSON.parse(text);
+            console.log(parsed);
             responseOutput.textContent = JSON.stringify(parsed, null, 2);
             lastApiResponse = parsed;
             renderResponseCards();
@@ -902,7 +904,7 @@
 
         const metaList = document.createElement("dl");
         metaList.className = "meta-list";
-        appendMeta(metaList, "파일", createFileLink(payload.file));
+        appendMeta(metaList, "파일", createFileLink(payload.file_path));
         appendMeta(metaList, "페이지", payload.page_num ?? "-");
         appendMeta(metaList, "서비스", createServiceChips(payload));
         appendMeta(metaList, "NER", formatBoolean(payload.ner));
@@ -939,14 +941,22 @@
 
       function createFileLink(filePath) {
         if (!filePath) return document.createTextNode("-");
+
+        const parts = filePath.split('/');
+        const filtered = parts.filter(Boolean);
+        const rest = filtered.slice(2);
+        filePath = rest.join('/');
+
         const encodedPath = encodeURIComponent(filePath);
         const link = document.createElement("a");
+        const filename = filePath.split("/").pop() || filePath;
+
         link.href = `${FILE_DOWNLOAD_BASE_URL}${encodedPath}`;
         link.target = "_blank";
         link.rel = "noopener noreferrer";
         link.className = "file-link";
-        link.textContent = filePath.split("/").pop() || filePath;
-        link.title = filePath;
+        link.textContent = filename;
+        link.title = filename;
         return link;
       }
 

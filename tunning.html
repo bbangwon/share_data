@@ -198,7 +198,8 @@
         font-weight: 700;
       }
       .meta-grid {
-        display: grid;
+        display: flex;                
+        flex-direction: column;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 8px;
       }
@@ -206,7 +207,7 @@
         border: 1px solid var(--border);
         border-radius: 8px;
         padding: 8px 10px;
-        background: #fff;
+        background: #fff;        
       }
       .meta-item .meta-label {
         font-size: 12px;
@@ -304,7 +305,7 @@
           <div class="row two">
             <label>
               API Base URL
-              <input id="apiBase" type="text" value="http://99.1.82.169:28080/api/v1/qdrant" required />
+              <input id="apiBase" type="text" value="http://99.1.82.169:8080/api/v1/qdrant" required />
             </label>
             <label>
               Collection Name
@@ -389,6 +390,7 @@
     </div>
 
     <script>
+      const FILE_DOWNLOAD_BASE_URL = "https://busanai.busan.go.kr/download/";
       const apiBaseInput = document.getElementById("apiBase");
       const collectionInput = document.getElementById("collectionName");
       const fileInput = document.getElementById("fileName");
@@ -477,8 +479,9 @@
             throw new Error(msg || `요청 실패 (status: ${res.status})`);
           }
           const data = await res.json();
-          const points = data.points || [];
-          state.points = points;
+          const points = data.points || [];                    
+          points.sort((a, b) => a.payload.page_num - b.payload.page_num);
+          state.points = points;          
           renderPoints(points);
           searchStatus.innerHTML = `<strong>${points.length}</strong>개의 포인트를 불러왔습니다.`;
         } catch (err) {
@@ -549,6 +552,7 @@
       });
 
       function escapeHTML(str) {
+        if (typeof str !== "string") str = String(str ?? "");
         return (str || "").replace(
           /[&<>"']/g,
           (ch) =>
@@ -601,6 +605,26 @@
         }
       }
 
+      function createFileLink(filePath, pageNum) {
+        if (!filePath) return document.createTextNode("-");
+
+        const parts = filePath.split('/');
+        const filtered = parts.filter(Boolean);
+        const rest = filtered.slice(2);
+        filePath = rest.join('/');
+
+        const encodedPath = encodeURIComponent(filePath);
+        const link = document.createElement("a");
+        const filename = filePath.split("/").pop() || filePath;
+
+        link.href = `${FILE_DOWNLOAD_BASE_URL}${encodedPath}#page=${pageNum}`;
+        link.target = "_blank";
+        link.rel = "noopener noreferrer";
+        link.textContent = filename;
+        link.title = filename;
+        return link.outerHTML;
+      }
+
       function renderPoints(points) {
         pointsContainer.innerHTML = "";
         if (!points.length) {
@@ -634,25 +658,13 @@
                 }" aria-label="select point ${p.id}" />
                 <span class="pill">#${idx + 1}</span>
                 <span class="muted">ID: ${p.id}</span>
-              </div>
-              <div class="muted">score: ${p.score ?? "n/a"}</div>
+              </div>              
             </header>
             <div class="meta-grid">
-              <div class="meta-item">
-                <div class="meta-label">Service</div>
-                <div class="meta-value">${escapeHTML(service)}</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Group</div>
-                <div class="meta-value">${escapeHTML(group)}</div>
-              </div>
-              <div class="meta-item">
-                <div class="meta-label">Boost Keywords</div>
-                <div class="meta-value">${escapeHTML(boostKeywords)}</div>
-              </div>
+
               <div class="meta-item">
                 <div class="meta-label">File Path</div>
-                <div class="meta-value">${escapeHTML(filePath)}</div>
+                <div class="meta-value">${createFileLink(filePath, pageNum)}</div>
               </div>
               <div class="meta-item">
                 <div class="meta-label">Page Num</div>
@@ -680,6 +692,18 @@
                 </div>
               </div>
               <div class="text-block__body" data-content="${textId}"></div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Service</div>
+              <div class="meta-value">${escapeHTML(service)}</div>
+            </div>
+            <div class="meta-item">
+              <div class="meta-label">Group</div>
+              <div class="meta-value">${escapeHTML(group)}</div>
+            </div>            
+            <div class="meta-item">
+              <div class="meta-label">Boost Keywords</div>
+              <div class="meta-value">${escapeHTML(boostKeywords)}</div>
             </div>
             <details class="payload-details">
               <summary>원본 payload 보기</summary>
