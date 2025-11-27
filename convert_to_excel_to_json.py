@@ -55,7 +55,7 @@ def convert_excel_to_json(input_filename, output_filename):
             question_obj = {
                 "text": str(question_text),
                 "ref_doc": str(ref_doc_text),
-                "ref_page": int(str(ref_doc_page_text)),
+                "ref_page": str(ref_doc_page_text),
             }
 
             formatted_data.append(start_obj)
