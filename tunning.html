@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ko">
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
@@ -20,14 +20,8 @@
       }
       body {
         margin: 0;
-        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont,
-          "Helvetica Neue", sans-serif;
-        background: radial-gradient(
-            circle at 20% 20%,
-            #eef2ff 0,
-            #eef2ff 25%,
-            transparent 25%
-          ),
+        font-family: "Segoe UI", -apple-system, BlinkMacSystemFont, "Helvetica Neue", sans-serif;
+        background: radial-gradient(circle at 20% 20%, #eef2ff 0, #eef2ff 25%, transparent 25%),
           var(--bg);
         color: var(--text);
         min-height: 100vh;
@@ -101,11 +95,23 @@
         display: grid;
         gap: 10px;
       }
+      .row.required {
+        grid-template-columns: 1fr;
+      }
+      .row.optional {
+        grid-template-columns: 1fr;
+      }
       @media (min-width: 720px) {
         .row.two {
           grid-template-columns: repeat(2, minmax(0, 1fr));
         }
         .row.three {
+          grid-template-columns: repeat(3, minmax(0, 1fr));
+        }
+        .row.required {
+          grid-template-columns: 2fr 1fr;
+        }
+        .row.optional {
           grid-template-columns: repeat(3, minmax(0, 1fr));
         }
       }
@@ -117,8 +123,7 @@
         padding: 12px 16px;
         font-weight: 700;
         cursor: pointer;
-        transition: transform 0.15s ease, box-shadow 0.15s ease,
-          background 0.15s ease;
+        transition: transform 0.15s ease, box-shadow 0.15s ease, background 0.15s ease;
       }
       button:hover {
         background: var(--accent-strong);
@@ -168,8 +173,8 @@
         font-size: 12px;
       }
       .payload {
-        font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco,
-          Consolas, "Liberation Mono", "Courier New", monospace;
+        font-family: ui-monospace, SFMono-Regular, SFMono-Regular, Menlo, Monaco, Consolas,
+          "Liberation Mono", "Courier New", monospace;
         background: #0f172a;
         color: #e2e8f0;
         padding: 8px 10px;
@@ -198,7 +203,7 @@
         font-weight: 700;
       }
       .meta-grid {
-        display: flex;                
+        display: flex;
         flex-direction: column;
         grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
         gap: 8px;
@@ -207,7 +212,7 @@
         border: 1px solid var(--border);
         border-radius: 8px;
         padding: 8px 10px;
-        background: #fff;        
+        background: #fff;
       }
       .meta-item .meta-label {
         font-size: 12px;
@@ -294,8 +299,7 @@
       <header>
         <h1>Qdrant Points Tuning</h1>
         <p class="lead">
-          파일명과 페이지로 포인트를 조회하고, 선택한 포인트에 boost keywords를
-          적용합니다.
+          파일명과 페이지로 포인트를 조회하고, 선택한 포인트에 boost keywords를 적용합니다.
         </p>
       </header>
 
@@ -304,11 +308,16 @@
         <form id="searchForm">
           <div class="row two">
             <label>
-              API Base URL
-              <input id="apiBase" type="text" value="http://99.1.82.169:8080/api/v1/qdrant" required />
+              ❗API Base URL
+              <input
+                id="apiBase"
+                type="text"
+                value="http://99.1.82.169:8080/api/v1/qdrant"
+                required
+              />
             </label>
             <label>
-              Collection Name
+              ❗Collection Name
               <input
                 id="collectionName"
                 type="text"
@@ -318,40 +327,36 @@
               />
             </label>
           </div>
-          <div class="row three">
+          <div class="row required">
             <label>
-              File Name
+              ❗File Name
               <input
                 id="fileName"
                 type="text"
-                placeholder="파일명을 입력하세요"
+                placeholder="파일명을 정확하게 입력해주세요"
                 required
               />
             </label>
+            <label>
+              ❗Limit
+              <input id="limit" type="number" min="0" value="10" required />
+              <span class="muted" style="color: gray; font-style: oblique; text-align: right"
+                >* 0 입력 시 검색 조건에 맞는 모든 포인트 조회</span
+              >
+            </label>
+          </div>
+          <div class="row optional">
             <label>
               Page Number (optional)
               <input id="pageNum" type="number" min="1" placeholder="예: 3" />
             </label>
             <label>
-              Fetch All Points
-              <select id="fetchAll">
-                <option value="true" selected>전체 조회</option>
-                <option value="false">부분 조회 (offset/limit)</option>
-              </select>
-            </label>
-          </div>
-          <div class="row two" id="partialControls" style="display: none">
-            <label>
-              Offset (point id)
-              <input
-                id="offset"
-                type="text"
-                placeholder="부분 조회 시작 point_id"
-              />
+              Parent Index (optional)
+              <input id="parentIdx" type="number" min="0" placeholder="예: 1" />
             </label>
             <label>
-              Limit
-              <input id="offsetLimit" type="number" min="1" value="20" />
+              Offset (optional)
+              <input id="offset" type="text" placeholder="부분 조회 시작 point_id" />
             </label>
           </div>
           <button type="submit">포인트 검색</button>
@@ -376,14 +381,9 @@
         <form id="tuneForm">
           <label>
             Boost Keywords
-            <textarea
-              id="boostKeywords"
-              placeholder="예: 부산시 스마트팩토리 지원"
-            ></textarea>
+            <textarea id="boostKeywords" placeholder="예: 부산시 스마트팩토리 지원"></textarea>
           </label>
-          <button type="submit" id="tuneBtn" disabled>
-            선택 포인트 업데이트
-          </button>
+          <button type="submit" id="tuneBtn" disabled>선택 포인트 업데이트</button>
           <div id="tuneStatus" class="status"></div>
         </form>
       </section>
@@ -395,10 +395,9 @@
       const collectionInput = document.getElementById("collectionName");
       const fileInput = document.getElementById("fileName");
       const pageInput = document.getElementById("pageNum");
-      const fetchAllSelect = document.getElementById("fetchAll");
+      const parentIdxInput = document.getElementById("parentIdx");
       const offsetInput = document.getElementById("offset");
-      const offsetLimitInput = document.getElementById("offsetLimit");
-      const partialControls = document.getElementById("partialControls");
+      const limitInput = document.getElementById("limit");
       const searchForm = document.getElementById("searchForm");
       const searchStatus = document.getElementById("searchStatus");
       const pointsContainer = document.getElementById("pointsContainer");
@@ -414,11 +413,6 @@
         points: [],
         selected: new Set(),
       };
-
-      fetchAllSelect.addEventListener("change", () => {
-        const isAll = fetchAllSelect.value === "true";
-        partialControls.style.display = isAll ? "none" : "grid";
-      });
 
       selectAllBtn.addEventListener("click", () => {
         state.points.forEach((p) => state.selected.add(p.id));
@@ -443,51 +437,50 @@
         const collection = collectionInput.value.trim();
         const fileName = fileInput.value.trim();
         const page = pageInput.value ? Number(pageInput.value) : null;
-        const fetchAll = fetchAllSelect.value === "true";
+        const parentIdx = parentIdxInput.value ? Number(parentIdxInput.value) : null;
         const offset = offsetInput.value.trim() || null;
-        const offsetLimit = offsetLimitInput.value
-          ? Number(offsetLimitInput.value)
-          : 20;
+        const limitValue = limitInput.value.trim();
+        const limit = limitValue === "" ? null : Number(limitValue);
 
         if (!base || !collection || !fileName) {
           searchStatus.innerHTML =
             '<span class="error">API Base, Collection, File Name은 필수입니다.</span>';
           return;
         }
+        if (limit === null || Number.isNaN(limit) || limit < 0) {
+          searchStatus.innerHTML = '<span class="error">Limit은 0 이상의 숫자여야 합니다.</span>';
+          return;
+        }
 
         const payload = {
           file_name: fileName,
-          fetch_all: fetchAll,
+          limit,
           page_num: page || null,
-          offset_limit: offsetLimit || 20,
+          parent_idx: parentIdx ?? null,
           offset: offset || null,
         };
 
         searchStatus.textContent = "포인트를 불러오는 중...";
 
         try {
-          const res = await fetch(
-            `${base}/collections/${encodeURIComponent(collection)}/points`,
-            {
-              method: "POST",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            }
-          );
+          const res = await fetch(`${base}/collections/${encodeURIComponent(collection)}/points`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
           if (!res.ok) {
             const msg = await res.text();
             throw new Error(msg || `요청 실패 (status: ${res.status})`);
           }
           const data = await res.json();
-          const points = data.points || [];                    
+          const points = data.points || [];
           points.sort((a, b) => a.payload.page_num - b.payload.page_num);
-          state.points = points;          
+          state.points = points;
           renderPoints(points);
           searchStatus.innerHTML = `<strong>${points.length}</strong>개의 포인트를 불러왔습니다.`;
         } catch (err) {
           console.error(err);
-          searchStatus.innerHTML =
-            '<span class="error">검색 실패: ' + err.message + "</span>";
+          searchStatus.innerHTML = '<span class="error">검색 실패: ' + err.message + "</span>";
         } finally {
           syncSelectionUI();
         }
@@ -503,18 +496,15 @@
         const pointIds = Array.from(state.selected);
 
         if (!base || !collection) {
-          tuneStatus.innerHTML =
-            '<span class="error">API Base와 Collection을 입력하세요.</span>';
+          tuneStatus.innerHTML = '<span class="error">API Base와 Collection을 입력하세요.</span>';
           return;
         }
         if (pointIds.length === 0) {
-          tuneStatus.innerHTML =
-            '<span class="error">업데이트할 포인트를 선택하세요.</span>';
+          tuneStatus.innerHTML = '<span class="error">업데이트할 포인트를 선택하세요.</span>';
           return;
         }
         if (!boostKeywords) {
-          tuneStatus.innerHTML =
-            '<span class="error">Boost keywords를 입력하세요.</span>';
+          tuneStatus.innerHTML = '<span class="error">Boost keywords를 입력하세요.</span>';
           return;
         }
 
@@ -527,25 +517,20 @@
         tuneStatus.textContent = "업데이트 중...";
 
         try {
-          const res = await fetch(
-            `${base}/collections/${encodeURIComponent(collection)}/points`,
-            {
-              method: "PUT",
-              headers: { "Content-Type": "application/json" },
-              body: JSON.stringify(payload),
-            }
-          );
+          const res = await fetch(`${base}/collections/${encodeURIComponent(collection)}/points`, {
+            method: "PUT",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(payload),
+          });
           if (!res.ok) {
             const msg = await res.text();
             throw new Error(msg || `요청 실패 (status: ${res.status})`);
           }
           const data = await res.json();
-          tuneStatus.innerHTML =
-            '<span class="success">완료:</span> ' + JSON.stringify(data);
+          tuneStatus.innerHTML = '<span class="success">완료:</span> ' + JSON.stringify(data);
         } catch (err) {
           console.error(err);
-          tuneStatus.innerHTML =
-            '<span class="error">업데이트 실패: ' + err.message + "</span>";
+          tuneStatus.innerHTML = '<span class="error">업데이트 실패: ' + err.message + "</span>";
         } finally {
           tuneBtn.disabled = false;
         }
@@ -584,11 +569,9 @@
       }
 
       function setActiveButtons(container, targetId, mode) {
-        container
-          .querySelectorAll(`[data-target="${targetId}"][data-mode]`)
-          .forEach((btn) => {
-            btn.classList.toggle("is-active", btn.dataset.mode === mode);
-          });
+        container.querySelectorAll(`[data-target="${targetId}"][data-mode]`).forEach((btn) => {
+          btn.classList.toggle("is-active", btn.dataset.mode === mode);
+        });
       }
 
       async function copyText(text) {
@@ -608,10 +591,10 @@
       function createFileLink(filePath, pageNum) {
         if (!filePath) return document.createTextNode("-");
 
-        const parts = filePath.split('/');
+        const parts = filePath.split("/");
         const filtered = parts.filter(Boolean);
         const rest = filtered.slice(2);
-        filePath = rest.join('/');
+        filePath = rest.join("/");
 
         const encodedPath = encodeURIComponent(filePath);
         const link = document.createElement("a");
@@ -628,8 +611,7 @@
       function renderPoints(points) {
         pointsContainer.innerHTML = "";
         if (!points.length) {
-          pointsContainer.innerHTML =
-            '<div class="muted">검색 결과가 없습니다.</div>';
+          pointsContainer.innerHTML = '<div class="muted">검색 결과가 없습니다.</div>';
           return;
         }
         points.forEach((p, idx) => {
@@ -644,18 +626,14 @@
           const boostKeywords = formatBoostKeywords(payload.boost_keywords);
           const filePath = payload.file_path || "-";
           const pageNum =
-            payload.page_num === 0 || payload.page_num
-              ? String(payload.page_num)
-              : "-";
+            payload.page_num === 0 || payload.page_num ? String(payload.page_num) : "-";
 
           const parentId = `parent-${p.id}-${idx}`;
           const textId = `text-${p.id}-${idx}`;
           div.innerHTML = `
             <header>
               <div class="actions">
-                <input type="checkbox" data-point-id="${
-                  p.id
-                }" aria-label="select point ${p.id}" />
+                <input type="checkbox" data-point-id="${p.id}" aria-label="select point ${p.id}" />
                 <span class="pill">#${idx + 1}</span>
                 <span class="muted">ID: ${p.id}</span>
               </div>              
