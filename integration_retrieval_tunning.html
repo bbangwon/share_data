@@ -706,10 +706,6 @@
           tuneStatus.innerHTML = '<span class="error">업데이트할 포인트를 선택하세요.</span>';
           return;
         }
-        if (!boostKeywords) {
-          tuneStatus.innerHTML = '<span class="error">Boost keywords를 입력하세요.</span>';
-          return;
-        }
 
         const payload = {
           point_ids: pointIds,
