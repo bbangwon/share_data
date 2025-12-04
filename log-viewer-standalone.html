@@ -1,0 +1,1968 @@
+<!DOCTYPE html>
+<html lang="ko">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title>AI 로그 뷰어 (Standalone)</title>
+    <style>
+      :root {
+        color-scheme: light;
+      }
+      * {
+        box-sizing: border-box;
+      }
+      body {
+        margin: 0;
+        font-family: "Pretendard", "Apple SD Gothic Neo", "Segoe UI", system-ui,
+          -apple-system, sans-serif;
+        background: #f4f6fa;
+        color: #1f2933;
+        line-height: 1.5;
+      }
+      main {
+        max-width: 1200px;
+        margin: 0 auto;
+        padding: 32px 24px 64px;
+      }
+      h1 {
+        margin: 0 0 8px;
+        font-size: 2rem;
+        font-weight: 700;
+      }
+      p.lead {
+        margin: 0 0 24px;
+        color: #52606d;
+      }
+      section {
+        margin-bottom: 28px;
+      }
+      .panel {
+        background: #ffffff;
+        border: 1px solid #d9e2ec;
+        border-radius: 14px;
+        box-shadow: 0 6px 16px rgba(15, 23, 42, 0.08);
+        padding: 20px;
+      }
+      .loader-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+      }
+      .loader-controls label {
+        font-weight: 600;
+      }
+      .api-controls {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        align-items: center;
+        margin-bottom: 18px;
+      }
+      .api-controls label {
+        display: flex;
+        flex-direction: column;
+        font-weight: 600;
+        color: #102a43;
+      }
+      .api-controls input {
+        margin-top: 6px;
+        padding: 8px 10px;
+        border: 1px solid #bcccdc;
+        border-radius: 8px;
+        font-size: 0.95rem;
+        min-width: 200px;
+        background: #ffffff;
+        color: inherit;
+      }
+      .api-controls input:focus {
+        outline: none;
+        border-color: #1f73b7;
+        box-shadow: 0 0 0 2px rgba(31, 115, 183, 0.15);
+      }
+      .file-input-wrapper {
+        position: relative;
+        overflow: hidden;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 10px;
+        background: #1f73b7;
+        color: #ffffff;
+        padding: 10px 16px;
+        cursor: pointer;
+      }
+      .file-input-wrapper input[type="file"] {
+        position: absolute;
+        inset: 0;
+        opacity: 0;
+        cursor: pointer;
+      }
+      button {
+        border: none;
+        padding: 10px 16px;
+        border-radius: 10px;
+        background: #486581;
+        color: #ffffff;
+        font-size: 0.95rem;
+        cursor: pointer;
+        transition: background 0.15s ease;
+      }
+      button:hover {
+        background: #364152;
+      }
+      button.secondary {
+        background: #bcccdc;
+        color: #102a43;
+      }
+      button.secondary:hover {
+        background: #9fb3c8;
+      }
+      .status-pill {
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 600;
+        display: inline-flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .status-pill.info {
+        background: #e0f2fe;
+        color: #075985;
+      }
+      .status-pill.success {
+        background: #dcfce7;
+        color: #166534;
+      }
+      .status-pill.warning {
+        background: #fef3c7;
+        color: #92400e;
+      }
+      .status-pill.error {
+        background: #fee2e2;
+        color: #991b1b;
+      }
+      .dropzone {
+        margin-top: 16px;
+        padding: 18px;
+        border: 2px dashed #9fb3c8;
+        border-radius: 12px;
+        background: #f8fafc;
+        text-align: center;
+        color: #627d98;
+        transition: border-color 0.2s ease, background 0.2s ease;
+      }
+      .dropzone.dragover {
+        border-color: #1f73b7;
+        background: #e1effe;
+        color: #102a43;
+      }
+      .filters {
+        display: none;
+        gap: 12px;
+        align-items: center;
+        flex-wrap: wrap;
+      }
+      .filters.active {
+        display: flex;
+      }
+      .filters label {
+        font-weight: 600;
+        color: #334e68;
+        display: flex;
+        align-items: center;
+        gap: 6px;
+      }
+      .filters input[type="search"],
+      .filters select {
+        border: 1px solid #cbd2d9;
+        border-radius: 10px;
+        padding: 9px 12px;
+        font-size: 0.95rem;
+        min-width: 200px;
+        background: #ffffff;
+      }
+      .filters input[type="checkbox"] {
+        width: auto;
+        margin: 0;
+      }
+      .summary-grid {
+        display: grid;
+        gap: 16px;
+        grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+      }
+      .stat-card {
+        background: #f0f4f8;
+        border-radius: 12px;
+        padding: 16px;
+        border: 1px solid #d9e2ec;
+      }
+      .stat-card strong {
+        display: block;
+        font-size: 1.8rem;
+        margin-bottom: 6px;
+        color: #1f2933;
+      }
+      .stat-card span {
+        color: #52606d;
+        font-size: 0.9rem;
+      }
+      .step-table-wrapper {
+        overflow-x: auto;
+      }
+      table {
+        width: 100%;
+        border-collapse: collapse;
+        font-size: 0.95rem;
+      }
+      th,
+      td {
+        border-bottom: 1px solid #e4e7eb;
+        padding: 10px 12px;
+        text-align: left;
+      }
+      th {
+        background: #f0f4f8;
+        font-weight: 700;
+        color: #243b53;
+      }
+      tbody tr:hover {
+        background: #f8fafc;
+      }
+      .entries-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        flex-wrap: wrap;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+      .entries-header h2 {
+        margin: 0;
+        font-size: 1.4rem;
+        color: #102a43;
+      }
+      .entry-count {
+        color: #627d98;
+        font-weight: 600;
+      }
+      .entry-list {
+        display: grid;
+        gap: 20px;
+      }
+      .entry-card {
+        background: #ffffff;
+        border: 1px solid #d9e2ec;
+        border-radius: 16px;
+        padding: 20px;
+        box-shadow: 0 8px 18px rgba(15, 23, 42, 0.06);
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+        overflow-wrap: anywhere;
+      }
+      .entry-card.is-missing {
+        border-color: #facc15;
+        box-shadow: 0 12px 22px rgba(218, 165, 32, 0.14);
+      }
+      .entry-card header {
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+        margin-bottom: 12px;
+      }
+      .entry-card header h3 {
+        margin: 0;
+        font-size: 1.15rem;
+        color: #0b1f33;
+      }
+      .entry-meta {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 12px;
+        color: #52606d;
+        font-size: 0.9rem;
+        min-width: 0;
+      }
+      .entry-meta span {
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      .qa-summary {
+        display: grid;
+        gap: 12px;
+        margin: 12px 0 16px;
+        padding: 12px;
+        border-radius: 12px;
+        background: #f8fafc;
+        border: 1px solid #d9e2ec;
+      }
+      .qa-item {
+        display: grid;
+        gap: 6px;
+      }
+      .qa-label {
+        font-weight: 700;
+        color: #0b1f33;
+        font-size: 0.9rem;
+        text-transform: uppercase;
+        letter-spacing: 0.04em;
+      }
+      .qa-content {
+        margin: 0;
+        color: #243b53;
+        font-size: 0.95rem;
+        white-space: pre-wrap;
+        word-break: break-word;
+      }
+      .qa-content a {
+        color: #2563eb;
+        text-decoration: underline;
+        font-weight: 600;
+        transition: color 0.2s ease;
+      }
+      .qa-content a:hover {
+        color: #1d4ed8;
+      }
+      .badge {
+        display: inline-flex;
+        align-items: center;
+        padding: 4px 10px;
+        border-radius: 999px;
+        font-size: 0.8rem;
+        font-weight: 700;
+        text-transform: uppercase;
+        letter-spacing: 0.03em;
+      }
+      .badge.complete {
+        background: #d1fae5;
+        color: #065f46;
+      }
+      .badge.missing {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .missing-list {
+        margin: 8px 0 16px;
+        padding-left: 18px;
+        color: #b45309;
+      }
+      .entry-steps {
+        display: grid;
+        gap: 12px;
+      }
+      details.step {
+        border: 1px solid #d9e2ec;
+        border-radius: 12px;
+        background: #f8fafc;
+        padding: 10px 12px;
+      }
+      details.step summary {
+        display: flex;
+        flex-wrap: wrap;
+        gap: 8px 14px;
+        align-items: center;
+        cursor: pointer;
+        list-style: none;
+        font-weight: 600;
+        color: #102a43;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      details.step summary::-webkit-details-marker {
+        display: none;
+      }
+      details.step pre {
+        margin: 12px 0 4px;
+        padding: 12px;
+        background: #0f172a;
+        color: #f8fafc;
+        border-radius: 10px;
+        max-height: 320px;
+        overflow: auto;
+        font-size: 0.85rem;
+        line-height: 1.45;
+        white-space: pre-wrap;
+        word-break: break-word;
+        overflow-wrap: anywhere;
+      }
+      .step-meta {
+        display: inline-flex;
+        gap: 10px;
+        color: #486581;
+        font-size: 0.85rem;
+        font-weight: 500;
+      }
+      .step-content {
+        display: flex;
+        flex-direction: column;
+        gap: 8px;
+      }
+      .step-actions {
+        display: flex;
+        justify-content: flex-end;
+      }
+      .copy-button {
+        border: none;
+        border-radius: 999px;
+        padding: 6px 14px;
+        font-size: 0.8rem;
+        font-weight: 600;
+        background: #2563eb;
+        color: #ffffff;
+        cursor: pointer;
+        transition: background 0.2s ease, transform 0.1s ease,
+          box-shadow 0.2s ease;
+        box-shadow: 0 4px 10px rgba(37, 99, 235, 0.2);
+      }
+      .copy-button:hover {
+        background: #1d4ed8;
+      }
+      .copy-button:active {
+        transform: translateY(1px);
+      }
+      .copy-button:disabled {
+        background: #94a3b8;
+        cursor: default;
+        box-shadow: none;
+      }
+      .status-flag {
+        font-size: 0.85rem;
+        font-weight: 700;
+        padding: 3px 8px;
+        border-radius: 999px;
+      }
+      .status-flag.success {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .status-flag.failure {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .status-flag.unknown {
+        background: #e2e8f0;
+        color: #334155;
+      }
+      .hint {
+        margin-top: 12px;
+        color: #7b8794;
+        font-size: 0.85rem;
+      }
+      .rag-result-card {
+        margin: 16px 0;
+        padding: 16px;
+        background: #f0f9ff;
+        border: 1px solid #bae6fd;
+        border-radius: 12px;
+      }
+      .rag-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding-bottom: 12px;
+        border-bottom: 2px solid #7dd3fc;
+      }
+      .rag-header h4 {
+        margin: 0;
+        font-size: 1.1rem;
+        color: #075985;
+      }
+      .rag-status {
+        padding: 4px 12px;
+        border-radius: 999px;
+        font-size: 0.85rem;
+        font-weight: 700;
+        text-transform: uppercase;
+      }
+      .rag-status.success {
+        background: #dcfce7;
+        color: #15803d;
+      }
+      .rag-status.failure {
+        background: #fee2e2;
+        color: #b91c1c;
+      }
+      .rag-section {
+        margin-bottom: 16px;
+      }
+      .rag-section h5 {
+        margin: 0 0 12px 0;
+        font-size: 0.95rem;
+        color: #0c4a6e;
+        font-weight: 700;
+      }
+      .rag-doc-item {
+        margin-bottom: 8px;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 8px 12px;
+      }
+      .rag-doc-item summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: #0369a1;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+      }
+      .rag-doc-item summary::-webkit-details-marker {
+        display: none;
+      }
+      .doc-number {
+        background: #0ea5e9;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .doc-id {
+        font-size: 0.85rem;
+        color: #64748b;
+      }
+      .doc-content {
+        margin-top: 12px;
+      }
+      .doc-content {
+        margin-top: 12px;
+      }
+      .doc-controls {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 8px;
+      }
+      .toggle-view-btn,
+      .copy-doc-btn {
+        padding: 4px 12px;
+        font-size: 0.8rem;
+        border-radius: 6px;
+        background: #0ea5e9;
+        color: white;
+        border: none;
+        cursor: pointer;
+        transition: background 0.2s ease;
+      }
+      .toggle-view-btn:hover,
+      .copy-doc-btn:hover {
+        background: #0284c7;
+      }
+      .copy-doc-btn {
+        background: #10b981;
+      }
+      .copy-doc-btn:hover {
+        background: #059669;
+      }
+      .doc-text pre {
+        margin: 0;
+        padding: 12px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .doc-text[data-view-mode="html"] {
+        padding: 12px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 6px;
+        font-size: 0.9rem;
+        line-height: 1.6;
+        max-height: 300px;
+        overflow-y: auto;
+      }
+      .rag-stats {
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+        gap: 12px;
+      }
+      .stat-item {
+        background: #ffffff;
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        padding: 12px;
+        display: flex;
+        flex-direction: column;
+        gap: 4px;
+      }
+      .stat-label {
+        font-size: 0.85rem;
+        color: #64748b;
+        font-weight: 600;
+      }
+      .stat-value {
+        font-size: 1.2rem;
+        color: #0369a1;
+        font-weight: 700;
+      }
+      .rag-queries {
+        border: 1px solid #bae6fd;
+        border-radius: 8px;
+        background: #ffffff;
+        padding: 12px;
+      }
+      .rag-queries > summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: #0369a1;
+        list-style: none;
+      }
+      .rag-queries > summary::-webkit-details-marker {
+        display: none;
+      }
+      .rag-queries > summary h5 {
+        display: inline;
+        margin: 0;
+      }
+      .rag-query-item {
+        margin: 12px 0;
+        border: 1px solid #e0f2fe;
+        border-radius: 8px;
+        background: #f8fafc;
+        padding: 10px;
+      }
+      .rag-query-item summary {
+        cursor: pointer;
+        font-weight: 600;
+        color: #0c4a6e;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+        flex-wrap: wrap;
+      }
+      .rag-query-item summary::-webkit-details-marker {
+        display: none;
+      }
+      .query-number {
+        background: #0891b2;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+      }
+      .query-text {
+        flex: 1;
+        font-size: 0.9rem;
+        color: #334155;
+      }
+      .doc-count {
+        background: #e0f2fe;
+        color: #075985;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        font-weight: 700;
+      }
+      .query-results {
+        margin-top: 12px;
+        display: grid;
+        gap: 8px;
+      }
+      .query-doc {
+        background: #ffffff;
+        border: 1px solid #cbd5e1;
+        border-radius: 6px;
+        padding: 10px;
+        transition: border-color 0.2s ease, box-shadow 0.2s ease;
+      }
+      .query-doc.selected-doc {
+        border: 2px solid #10b981;
+        background: #f0fdf4;
+        box-shadow: 0 0 0 2px rgba(16, 185, 129, 0.1);
+      }
+      .query-doc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        gap: 8px;
+        margin-bottom: 8px;
+        flex-wrap: wrap;
+      }
+      .selected-badge {
+        background: #10b981;
+        color: white;
+        padding: 2px 8px;
+        border-radius: 4px;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+      .query-doc-number {
+        background: #64748b;
+        color: white;
+        padding: 2px 6px;
+        border-radius: 3px;
+        font-size: 0.75rem;
+        font-weight: 700;
+      }
+      .query-doc-score {
+        font-size: 0.8rem;
+        color: #64748b;
+        font-weight: 600;
+      }
+      .query-doc-info {
+        margin-bottom: 8px;
+        font-size: 0.85rem;
+        color: #475569;
+        display: grid;
+        gap: 4px;
+      }
+      .query-doc-info strong {
+        color: #334155;
+      }
+      .query-doc-content {
+        margin-top: 8px;
+      }
+      .query-doc-content summary {
+        cursor: pointer;
+        font-size: 0.85rem;
+        color: #0369a1;
+        font-weight: 600;
+      }
+      .query-doc-content summary::-webkit-details-marker {
+        display: none;
+      }
+      .query-doc-content .doc-controls {
+        margin-top: 8px;
+      }
+      .query-doc-content .doc-text pre {
+        margin-top: 8px;
+        padding: 10px;
+        background: #f8fafc;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 0.8rem;
+        line-height: 1.4;
+        white-space: pre-wrap;
+        word-break: break-word;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      .query-doc-content .doc-text[data-view-mode="html"] {
+        margin-top: 8px;
+        padding: 10px;
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 4px;
+        font-size: 0.85rem;
+        line-height: 1.5;
+        max-height: 200px;
+        overflow-y: auto;
+      }
+      @media (max-width: 640px) {
+        main {
+          padding: 20px 16px 48px;
+        }
+        .api-controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .api-controls label,
+        .api-controls button {
+          width: 100%;
+        }
+        .loader-controls {
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .filters input[type="search"],
+        .filters select {
+          min-width: 100%;
+        }
+      }
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>AI 서비스 로그 뷰어 (Standalone)</h1>
+      <p class="lead">
+        이 페이지는 WAS와 분리된 로컬 테스트 용도입니다. JSON 로그 파일을
+        불러오거나 드래그해 시각화만 할 수 있으며, DB 검색 및 다운로드 기능은
+        제공하지 않습니다.
+      </p>
+
+      <section class="panel">
+        <div class="loader-controls">
+          <label>로그 파일 불러오기</label>
+          <div class="file-input-wrapper">
+            JSON 파일 선택
+            <input
+              type="file"
+              id="file-input"
+              accept=".json,application/json"
+            />
+          </div>
+          <span id="loader-status" class="status-pill info">대기 중</span>
+        </div>
+        <div id="dropzone" class="dropzone">
+          여기에 JSON 파일을 끌어다 놓을 수도 있습니다.
+        </div>
+        <p class="hint">
+          JSON은 기존 로그 API와 동일한 스키마를 가정합니다. 파일 내용은
+          브라우저 메모리에만 저장되며 네트워크로 전송하지 않습니다.
+        </p>
+      </section>
+
+      <section id="filters" class="filters panel">
+        <label>
+          검색
+          <input
+            id="search-input"
+            type="search"
+            placeholder="질문, 단계, 상태 등"
+          />
+        </label>
+        <label>
+          단계 필터
+          <select id="step-filter">
+            <option value="">전체 단계</option>
+          </select>
+        </label>
+        <label>
+          <input id="missing-only" type="checkbox" />
+          누락 단계가 있는 요청만 보기
+        </label>
+        <label>
+          <input id="unanswered-only" type="checkbox" />
+          최종 답변이 미기록인 요청만 보기
+        </label>
+        <span id="filter-status" class="status-pill info"
+          >데이터를 불러오면 요약이 표시됩니다.</span
+        >
+      </section>
+
+      <section id="summary" class="panel"></section>
+
+      <section class="panel">
+        <h2>단계별 현황</h2>
+        <div id="step-table" class="step-table-wrapper"></div>
+      </section>
+
+      <section class="panel">
+        <h2>의도 분석 통계</h2>
+        <div id="intent-table" class="step-table-wrapper"></div>
+      </section>
+
+      <section class="entries panel">
+        <div class="entries-header">
+          <h2>요청별 타임라인</h2>
+          <span id="entry-count" class="entry-count"></span>
+        </div>
+        <div id="entry-list" class="entry-list"></div>
+      </section>
+    </main>
+
+    <script>
+      (function () {
+        const state = {
+          entries: [],
+          expectedSteps: [],
+          search: "",
+          stepFilter: "",
+          missingOnly: false,
+          unansweredOnly: false,
+          sourceLabel: "",
+          intentStats: { rows: [], total: 0 },
+        };
+
+        const refs = {
+          fileInput: document.getElementById("file-input"),
+          loaderStatus: document.getElementById("loader-status"),
+          dropzone: document.getElementById("dropzone"),
+          filters: document.getElementById("filters"),
+          searchInput: document.getElementById("search-input"),
+          stepFilter: document.getElementById("step-filter"),
+          missingOnly: document.getElementById("missing-only"),
+          unansweredOnly: document.getElementById("unanswered-only"),
+          filterStatus: document.getElementById("filter-status"),
+          summary: document.getElementById("summary"),
+          stepTable: document.getElementById("step-table"),
+          intentTable: document.getElementById("intent-table"),
+          entryCount: document.getElementById("entry-count"),
+          entryList: document.getElementById("entry-list"),
+        };
+
+        const QUESTION_STEP = "01. Task WAS 메세지큐 수신";
+        const ANSWER_STEP_FROM_DB = "08. DB 최종답변 저장";
+        const INTENT_STEP = "05_02. 의도분석 API 요청 결과 파싱";
+        const RAG_STEP = "06_05. RAG 검색 API 요청";
+
+        function setStatus(message, type = "info") {
+          if (!refs.loaderStatus) return;
+          refs.loaderStatus.textContent = message;
+          refs.loaderStatus.className = "status-pill " + type;
+        }
+
+        function escapeHTML(value) {
+          return String(value)
+            .replace(/&/g, "&amp;")
+            .replace(/</g, "&lt;")
+            .replace(/>/g, "&gt;")
+            .replace(/"/g, "&quot;")
+            .replace(/'/g, "&#039;");
+        }
+
+        function linkifyURLs(text) {
+          if (!text) return text;
+          const urlRegex = /(https?:\/\/[^\s<>"]+)/gi;
+          return String(text).replace(urlRegex, (url) => {
+            const escaped = escapeHTML(url);
+            return `<a href="${escaped}" target="_blank" rel="noopener noreferrer">${escaped}</a>`;
+          });
+        }
+
+        function parseDate(value) {
+          if (!value) return null;
+          if (value instanceof Date)
+            return isNaN(value.getTime()) ? null : value;
+          if (typeof value === "string") {
+            const date = new Date(value);
+            return isNaN(date.getTime()) ? null : date;
+          }
+          if (typeof value === "object" && "$date" in value) {
+            const date = new Date(value.$date);
+            return isNaN(date.getTime()) ? null : date;
+          }
+          return null;
+        }
+
+        function formatDate(date) {
+          if (!(date instanceof Date) || isNaN(date.getTime()))
+            return "기록 없음";
+          const yyyy = date.getFullYear();
+          const mm = String(date.getMonth() + 1).padStart(2, "0");
+          const dd = String(date.getDate()).padStart(2, "0");
+          const hh = String(date.getHours()).padStart(2, "0");
+          const mi = String(date.getMinutes()).padStart(2, "0");
+          const ss = String(date.getSeconds()).padStart(2, "0");
+          return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+        }
+
+        function formatSeconds(value) {
+          if (typeof value !== "number" || !isFinite(value)) return "미기록";
+          if (value >= 60) {
+            const minutes = Math.floor(value / 60);
+            const seconds = value % 60;
+            return `${minutes}분 ${seconds.toFixed(1)}초`;
+          }
+          return `${value.toFixed(3)}초`;
+        }
+
+        function formatBody(body) {
+          if (body === null || body === undefined) return "null";
+          if (typeof body === "string") return body;
+          try {
+            return JSON.stringify(body, null, 2);
+          } catch (err) {
+            return String(body);
+          }
+        }
+
+        async function copyToClipboard(text) {
+          const value = text != null ? String(text) : "";
+          if (navigator.clipboard && navigator.clipboard.writeText) {
+            await navigator.clipboard.writeText(value);
+            return;
+          }
+          const textarea = document.createElement("textarea");
+          textarea.value = value;
+          textarea.setAttribute("readonly", "");
+          textarea.style.position = "fixed";
+          textarea.style.opacity = "0";
+          document.body.appendChild(textarea);
+          textarea.focus({ preventScroll: true });
+          textarea.select();
+          const successful = document.execCommand("copy");
+          document.body.removeChild(textarea);
+          if (!successful) {
+            throw new Error("copy command was not successful");
+          }
+        }
+
+        function normalizeEntry(entry, index) {
+          const logs = Array.isArray(entry.logs) ? entry.logs : [];
+          const normalizedLogs = logs.map((log, logIndex) => {
+            const stepName =
+              typeof log?.STEP === "string" ? log.STEP : `Step ${logIndex + 1}`;
+            const issued = parseDate(log?._issued_time);
+            const duration =
+              typeof log?._duration === "number" ? log._duration : null;
+            const body = log?.BODY ?? null;
+            let status = null;
+            if (
+              body &&
+              typeof body === "object" &&
+              "result" in body &&
+              body.result
+            ) {
+              status = String(body.result).toLowerCase();
+            }
+            return {
+              step: stepName,
+              issued,
+              duration,
+              body,
+              raw: log,
+              status,
+            };
+          });
+          const issued = parseDate(entry?.issued_time);
+          const totalDuration =
+            typeof entry?.total_duration === "number"
+              ? entry.total_duration
+              : null;
+          return {
+            id: entry?._id ?? `entry-${index + 1}`,
+            botId: entry?.bot_id ?? "",
+            userId: entry?.user_id ?? "",
+            issued,
+            totalDuration,
+            logs: normalizedLogs,
+            raw: entry,
+          };
+        }
+
+        function deriveExpectedSteps(entries) {
+          if (!entries.length) return [];
+          const sorted = [...entries].sort(
+            (a, b) => (b.logs.length || 0) - (a.logs.length || 0)
+          );
+          const ordered = sorted[0]?.logs.map((log) => log.step) ?? [];
+          const seen = new Set(ordered);
+          for (const entry of entries) {
+            for (const log of entry.logs) {
+              if (log.step && !seen.has(log.step)) {
+                ordered.push(log.step);
+                seen.add(log.step);
+              }
+            }
+          }
+          return ordered;
+        }
+
+        function computeMissingSteps(entry, expectedSteps) {
+          const present = new Set(entry.logs.map((log) => log.step));
+          return expectedSteps.filter((step) => !present.has(step));
+        }
+
+        function buildSearchText(entry) {
+          const fragments = [
+            entry.id,
+            entry.botId,
+            entry.userId,
+            entry.totalDuration != null ? entry.totalDuration.toString() : "",
+          ];
+          entry.logs.forEach((log) => {
+            fragments.push(log.step);
+            if (log.status) fragments.push(log.status);
+            if (log.body !== null && log.body !== undefined) {
+              if (typeof log.body === "string") {
+                fragments.push(log.body);
+              } else {
+                try {
+                  fragments.push(JSON.stringify(log.body));
+                } catch (err) {
+                  fragments.push(String(log.body));
+                }
+              }
+            }
+          });
+          return fragments.filter(Boolean).join(" ").toLowerCase();
+        }
+
+        function computeStepStats(entries, expected) {
+          const statsMap = new Map();
+          const totalEntries = entries.length || 1;
+          for (const entry of entries) {
+            for (const log of entry.logs) {
+              const step = log.step;
+              if (!step) continue;
+              if (!statsMap.has(step)) {
+                statsMap.set(step, {
+                  step,
+                  count: 0,
+                  success: 0,
+                  failure: 0,
+                  durations: [],
+                });
+              }
+              const stat = statsMap.get(step);
+              stat.count += 1;
+              if (log.status === "success") {
+                stat.success += 1;
+              } else if (log.status && log.status !== "success") {
+                stat.failure += 1;
+              }
+              if (typeof log.duration === "number" && isFinite(log.duration)) {
+                stat.durations.push(log.duration);
+              }
+            }
+          }
+
+          const finalize = (stat) => {
+            if (!stat) {
+              return {
+                step: "",
+                count: 0,
+                success: 0,
+                failure: 0,
+                coverage: 0,
+                averageDuration: null,
+              };
+            }
+            const durationAvg = stat.durations.length
+              ? stat.durations.reduce((sum, v) => sum + v, 0) /
+                stat.durations.length
+              : null;
+            return {
+              step: stat.step,
+              count: stat.count,
+              success: stat.success,
+              failure: stat.failure,
+              coverage: stat.count / totalEntries,
+              averageDuration: durationAvg,
+            };
+          };
+
+          const rows = expected.map((step) => finalize(statsMap.get(step)));
+          for (const [step, stat] of statsMap.entries()) {
+            if (!expected.includes(step)) {
+              rows.push(finalize(stat));
+            }
+          }
+          return rows;
+        }
+
+        function computeIntentStats(entries) {
+          const stats = new Map();
+          let total = 0;
+          for (const entry of entries) {
+            const intentLog = entry.logs.find(
+              (log) => log.step === INTENT_STEP
+            );
+            if (!intentLog) continue;
+            const detail = intentLog.body?.detail;
+            const intentNo = detail?.no ?? "미확인";
+            const intentName = detail?.intent_name ?? "미확인";
+            const key = `${intentNo}||${intentName}`;
+            if (!stats.has(key)) {
+              stats.set(key, { no: intentNo, intentName, count: 0 });
+            }
+            stats.get(key).count += 1;
+            total += 1;
+          }
+          const rows = Array.from(stats.values()).sort((a, b) => {
+            if (b.count !== a.count) return b.count - a.count;
+            return a.no.localeCompare(b.no);
+          });
+          return { rows, total };
+        }
+
+        function applyFilters(entries) {
+          const keyword = state.search.trim().toLowerCase();
+          return entries.filter((entry) => {
+            if (state.missingOnly && entry.missingSteps.length === 0) {
+              return false;
+            }
+            if (state.unansweredOnly) {
+              const hasAnswer =
+                typeof entry.finalAnswer === "string"
+                  ? entry.finalAnswer.trim().length > 0
+                  : Boolean(entry.finalAnswer);
+              if (hasAnswer) {
+                return false;
+              }
+            }
+            if (state.stepFilter) {
+              const hasStep = entry.logs.some(
+                (log) => log.step === state.stepFilter
+              );
+              if (!hasStep) return false;
+            }
+            if (keyword && !entry.searchText.includes(keyword)) {
+              return false;
+            }
+            return true;
+          });
+        }
+
+        function updateStepFilterOptions(expectedSteps) {
+          if (!refs.stepFilter) return;
+          refs.stepFilter.innerHTML = '<option value="">전체 단계</option>';
+          expectedSteps.forEach((step) => {
+            const option = document.createElement("option");
+            option.value = step;
+            option.textContent = step;
+            refs.stepFilter.appendChild(option);
+          });
+        }
+
+        function renderSummary() {
+          if (!refs.summary) return;
+          if (!state.entries.length) {
+            refs.summary.innerHTML = "<p>먼저 로그 파일을 불러와 주세요.</p>";
+            return;
+          }
+          const totals = state.entries
+            .map((entry) => entry.totalDuration)
+            .filter((value) => typeof value === "number" && isFinite(value));
+          const totalCount = state.entries.length;
+          const missingCount = state.entries.filter(
+            (entry) => entry.missingSteps.length > 0
+          ).length;
+          const durationsSum = totals.reduce((sum, value) => sum + value, 0);
+          const averageDuration = totals.length
+            ? durationsSum / totals.length
+            : null;
+          const minDuration = totals.length ? Math.min(...totals) : null;
+          const maxDuration = totals.length ? Math.max(...totals) : null;
+          const issuedDates = state.entries
+            .map((entry) => entry.issued)
+            .filter((date) => date instanceof Date && !isNaN(date.getTime()));
+          let rangeText = "기록 없음";
+          if (issuedDates.length) {
+            const earliest = new Date(
+              Math.min(...issuedDates.map((d) => d.getTime()))
+            );
+            const latest = new Date(
+              Math.max(...issuedDates.map((d) => d.getTime()))
+            );
+            rangeText = `${formatDate(earliest)} ~ ${formatDate(latest)}`;
+          }
+
+          refs.summary.innerHTML = `
+      <div class="summary-grid">
+        <div class="stat-card">
+          <strong>${totalCount}</strong>
+          <span>총 요청 수</span>
+        </div>
+        <div class="stat-card">
+          <strong>${missingCount}</strong>
+          <span>누락 단계가 있는 요청</span>
+        </div>
+        <div class="stat-card">
+          <strong>${
+            averageDuration != null
+              ? averageDuration.toFixed(3) + "초"
+              : "미기록"
+          }</strong>
+          <span>평균 총 소요 시간</span>
+        </div>
+        <div class="stat-card">
+          <strong>${
+            minDuration != null ? minDuration.toFixed(3) + "초" : "미기록"
+          }</strong>
+          <span>최소 / 최대 소요 (최대 ${
+            maxDuration != null ? maxDuration.toFixed(3) + "초" : "미기록"
+          })</span>
+        </div>
+        <div class="stat-card">
+          <strong>${state.expectedSteps.length}</strong>
+          <span>감지된 단계 종류</span>
+        </div>
+        <div class="stat-card">
+          <strong>${escapeHTML(state.sourceLabel || "미지정")}</strong>
+          <span>현재 데이터 소스</span>
+        </div>
+      </div>
+      <p class="hint">요청 발생 시각 범위: ${rangeText}</p>
+    `;
+        }
+
+        function renderStepStats() {
+          if (!refs.stepTable) return;
+          if (!state.entries.length) {
+            refs.stepTable.innerHTML =
+              "<p>단계별 현황은 로그를 불러온 뒤 확인할 수 있습니다.</p>";
+            return;
+          }
+          const stats = computeStepStats(state.entries, state.expectedSteps);
+          const totalEntries = state.entries.length;
+          const rows = stats
+            .map((stat) => {
+              if (!stat.step) return "";
+              const coveragePercent = (stat.coverage * 100).toFixed(0);
+              const successRate = stat.count
+                ? Math.round((stat.success / stat.count) * 100)
+                : 0;
+              return `
+          <tr>
+            <td>${escapeHTML(stat.step)}</td>
+            <td>${stat.count}</td>
+            <td>${coveragePercent}%</td>
+            <td>${successRate}%</td>
+            <td>${
+              stat.averageDuration != null
+                ? stat.averageDuration.toFixed(3) + "초"
+                : "미기록"
+            }</td>
+          </tr>
+        `;
+            })
+            .join("");
+
+          refs.stepTable.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>단계명</th>
+            <th>발생 횟수</th>
+            <th>커버리지 (요청 대비)</th>
+            <th>성공 비율</th>
+            <th>평균 소요 시간</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${rows}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="5">총 ${totalEntries}개의 요청 기준</td>
+          </tr>
+        </tfoot>
+      </table>
+    `;
+        }
+
+        function renderIntentStats() {
+          if (!refs.intentTable) return;
+          if (!state.entries.length) {
+            refs.intentTable.innerHTML =
+              "<p>의도 분석 통계를 표시하려면 로그를 불러와 주세요.</p>";
+            return;
+          }
+          const { rows, total } = state.intentStats;
+          if (!rows.length) {
+            refs.intentTable.innerHTML =
+              "<p>의도 분석 단계가 포함된 로그가 없습니다.</p>";
+            return;
+          }
+          const bodyRows = rows
+            .map(
+              (row) => `
+        <tr>
+          <td>${escapeHTML(row.no)}</td>
+          <td>${escapeHTML(row.intentName)}</td>
+          <td>${row.count}</td>
+          <td>${total ? Math.round((row.count / total) * 100) : 0}%</td>
+        </tr>`
+            )
+            .join("");
+          refs.intentTable.innerHTML = `
+      <table>
+        <thead>
+          <tr>
+            <th>의도 NO</th>
+            <th>의도명</th>
+            <th>발생 건수</th>
+            <th>비중</th>
+          </tr>
+        </thead>
+        <tbody>
+          ${bodyRows}
+        </tbody>
+        <tfoot>
+          <tr>
+            <td colspan="4">의도 분석 단계가 감지된 총 ${total}건 기준</td>
+          </tr>
+        </tfoot>
+      </table>
+    `;
+        }
+
+        function buildRagResultCard(result, detail) {
+          const wrapper = document.createElement("div");
+          wrapper.className = "rag-result-card";
+
+          const header = document.createElement("div");
+          header.className = "rag-header";
+          header.innerHTML = `
+      <h4>📚 RAG 검색 결과</h4>
+      <span class="rag-status ${result === "success" ? "success" : "failure"}">
+        ${escapeHTML(result || "unknown")}
+      </span>
+    `;
+          wrapper.appendChild(header);
+
+          const refDocIds = new Set(
+            (detail.ref_docs || []).map((doc) => doc.id)
+          );
+
+          if (detail.ref_docs && detail.ref_docs.length > 0) {
+            const refSection = document.createElement("div");
+            refSection.className = "rag-section";
+            refSection.innerHTML = `<h5>📄 주요 참고문서 (${detail.ref_docs.length}건)</h5>`;
+
+            detail.ref_docs.forEach((doc, idx) => {
+              const docItem = document.createElement("details");
+              docItem.className = "rag-doc-item";
+              const docId = `ref-doc-${idx}`;
+              docItem.innerHTML = `
+          <summary>
+            <span class="doc-number">#${idx + 1}</span>
+            <span class="doc-id">${escapeHTML(doc.id || "미확인")}</span>
+          </summary>
+          <div class="doc-content">
+            <div class="doc-controls">
+              <button class="toggle-view-btn" data-target="${docId}">HTML 보기</button>
+              <button class="copy-doc-btn">복사</button>
+            </div>
+            <div id="${docId}" class="doc-text" data-view-mode="text">
+              <pre>${escapeHTML(doc.passage || "내용 없음")}</pre>
+            </div>
+          </div>
+        `;
+
+              const toggleBtn = docItem.querySelector(".toggle-view-btn");
+              const copyBtn = docItem.querySelector(".copy-doc-btn");
+              const docTextDiv = docItem.querySelector(".doc-text");
+
+              if (toggleBtn && docTextDiv) {
+                toggleBtn.addEventListener("click", () => {
+                  const currentMode = docTextDiv.dataset.viewMode;
+                  if (currentMode === "text") {
+                    docTextDiv.innerHTML = doc.passage || "내용 없음";
+                    docTextDiv.dataset.viewMode = "html";
+                    toggleBtn.textContent = "텍스트 보기";
+                  } else {
+                    docTextDiv.innerHTML = `<pre>${escapeHTML(
+                      doc.passage || "내용 없음"
+                    )}</pre>`;
+                    docTextDiv.dataset.viewMode = "text";
+                    toggleBtn.textContent = "HTML 보기";
+                  }
+                });
+              }
+
+              if (copyBtn) {
+                copyBtn.addEventListener("click", async () => {
+                  const originalText = copyBtn.textContent;
+                  try {
+                    await copyToClipboard(doc.passage || "");
+                    copyBtn.textContent = "복사됨!";
+                    setTimeout(() => {
+                      copyBtn.textContent = originalText;
+                    }, 2000);
+                  } catch (err) {
+                    copyBtn.textContent = "복사 실패";
+                    setTimeout(() => {
+                      copyBtn.textContent = originalText;
+                    }, 2000);
+                  }
+                });
+              }
+
+              refSection.appendChild(docItem);
+            });
+            wrapper.appendChild(refSection);
+          }
+
+          if (detail.total_docs && detail.total_docs.results) {
+            const statsSection = document.createElement("div");
+            statsSection.className = "rag-section";
+
+            const totalQueries = detail.total_docs.results.length;
+            let totalRetrieved = 0;
+            detail.total_docs.results.forEach((result) => {
+              totalRetrieved += (result.retrieved_documents || []).length;
+            });
+
+            statsSection.innerHTML = `
+        <h5>📊 검색 통계</h5>
+        <div class="rag-stats">
+          <div class="stat-item">
+            <span class="stat-label">검색 쿼리 수</span>
+            <span class="stat-value">${totalQueries}건</span>
+          </div>
+          <div class="stat-item">
+            <span class="stat-label">총 검색 문서 수</span>
+            <span class="stat-value">${totalRetrieved}건</span>
+          </div>
+        </div>
+      `;
+            wrapper.appendChild(statsSection);
+
+            const queriesSection = document.createElement("details");
+            queriesSection.className = "rag-section rag-queries";
+            queriesSection.innerHTML = `<summary><h5>🔍 쿼리별 상세 결과 (${totalQueries}건)</h5></summary>`;
+
+            detail.total_docs.results.forEach((result, idx) => {
+              const queryItem = document.createElement("details");
+              queryItem.className = "rag-query-item";
+              const docCount = (result.retrieved_documents || []).length;
+
+              const queryResultsDiv = document.createElement("div");
+              queryResultsDiv.className = "query-results";
+
+              queryItem.innerHTML = `
+          <summary>
+            <span class="query-number">쿼리 #${idx + 1}</span>
+            <span class="query-text">${escapeHTML(
+              result.query || "쿼리 없음"
+            )}</span>
+            <span class="doc-count">${docCount}건</span>
+          </summary>
+        `;
+
+              (result.retrieved_documents || []).forEach((doc, docIdx) => {
+                const isSelected = refDocIds.has(doc.id);
+                const queryDocDiv = document.createElement("div");
+                queryDocDiv.className = `query-doc${
+                  isSelected ? " selected-doc" : ""
+                }`;
+                const queryDocId = `query-doc-${idx}-${docIdx}`;
+                const docSectionsConfig = [
+                  {
+                    field: "text",
+                    label: "본문 (text)",
+                  },
+                  {
+                    field: "parent_text",
+                    label: "상위 본문 (parent_text)",
+                  },
+                ];
+                const docSectionsHtml = docSectionsConfig
+                  .map(({ field, label }) => {
+                    const sectionId = `${queryDocId}-${field}`;
+                    const sectionValue = doc.payload?.[field] || "";
+                    return `
+                <div class="doc-section">
+                  <div class="doc-section-header"><strong>${label}</strong></div>
+                  <div class="doc-controls">
+                    <button class="toggle-view-btn" data-target="${sectionId}" data-field="${field}">HTML 보기</button>
+                    <button class="copy-doc-btn" data-field="${field}">복사</button>
+                  </div>
+                  <div id="${sectionId}" class="doc-text" data-view-mode="text" data-field="${field}">
+                    <pre>${escapeHTML(sectionValue || "내용 없음")}</pre>
+                  </div>
+                </div>
+              `;
+                  })
+                  .join("");
+
+                queryDocDiv.innerHTML = `
+            <div class="query-doc-header">
+              <span class="query-doc-number">#${docIdx + 1}</span>
+              <span class="query-doc-score">점수: ${
+                doc.score?.toFixed(6) || "N/A"
+              }</span>
+              ${
+                isSelected
+                  ? '<span class="selected-badge">✓ 참고문서로 선택됨</span>'
+                  : ""
+              }
+            </div>
+            <div class="query-doc-info">
+              <div><strong>파일:</strong> ${escapeHTML(
+                doc.payload?.file || "미확인"
+              )}</div>
+              <div><strong>페이지:</strong> ${
+                doc.payload?.page_num || "N/A"
+              }</div>
+              <div><strong>그룹:</strong> ${escapeHTML(
+                doc.payload?.group || "미확인"
+              )}</div>
+            </div>
+            <details class="query-doc-content">
+              <summary>본문 보기</summary>
+              ${docSectionsHtml}
+            </details>
+          `;
+
+                const toggleBtns =
+                  queryDocDiv.querySelectorAll(".toggle-view-btn");
+                toggleBtns.forEach((toggleBtn) => {
+                  const target = toggleBtn.dataset.target;
+                  const field = toggleBtn.dataset.field;
+                  if (!target || !field) return;
+                  const docTextDiv = queryDocDiv.querySelector(`#${target}`);
+                  if (!docTextDiv) return;
+                  toggleBtn.addEventListener("click", () => {
+                    const currentMode = docTextDiv.dataset.viewMode;
+                    const text = doc.payload?.[field] || "";
+                    if (currentMode === "text") {
+                      docTextDiv.innerHTML = text || "내용 없음";
+                      docTextDiv.dataset.viewMode = "html";
+                      toggleBtn.textContent = "텍스트 보기";
+                    } else {
+                      docTextDiv.innerHTML = `<pre>${escapeHTML(
+                        text || "내용 없음"
+                      )}</pre>`;
+                      docTextDiv.dataset.viewMode = "text";
+                      toggleBtn.textContent = "HTML 보기";
+                    }
+                  });
+                });
+
+                const copyBtns = queryDocDiv.querySelectorAll(".copy-doc-btn");
+                copyBtns.forEach((copyBtn) => {
+                  const field = copyBtn.dataset.field;
+                  if (!field) return;
+                  copyBtn.addEventListener("click", async () => {
+                    const originalText = copyBtn.textContent;
+                    try {
+                      await copyToClipboard(doc.payload?.[field] || "");
+                      copyBtn.textContent = "복사됨!";
+                      setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                      }, 2000);
+                    } catch (err) {
+                      copyBtn.textContent = "복사 실패";
+                      setTimeout(() => {
+                        copyBtn.textContent = originalText;
+                      }, 2000);
+                    }
+                  });
+                });
+
+                queryResultsDiv.appendChild(queryDocDiv);
+              });
+
+              queryItem.appendChild(queryResultsDiv);
+              queriesSection.appendChild(queryItem);
+            });
+            wrapper.appendChild(queriesSection);
+          }
+
+          return wrapper;
+        }
+
+        function buildEntryCard(entry) {
+          const card = document.createElement("article");
+          card.className = "entry-card";
+          if (entry.missingSteps.length) {
+            card.classList.add("is-missing");
+          }
+
+          const header = document.createElement("header");
+          header.innerHTML = `
+      <h3>${escapeHTML(entry.id)}</h3>
+      <div class="entry-meta">
+        <span>요청 시각: ${formatDate(entry.issued)}</span>
+        <span>총 소요: ${formatSeconds(entry.totalDuration)}</span>
+        <span>단계 수: ${entry.logs.length}</span>
+        ${entry.botId ? `<span>봇 ID: ${escapeHTML(entry.botId)}</span>` : ""}
+        ${
+          entry.userId
+            ? `<span>사용자 ID: ${escapeHTML(entry.userId)}</span>`
+            : ""
+        }
+      </div>
+      <span class="badge ${entry.missingSteps.length ? "missing" : "complete"}">
+        ${
+          entry.missingSteps.length
+            ? `단계 누락 ${entry.missingSteps.length}건`
+            : "전체 단계 완료"
+        }
+      </span>
+    `;
+          card.appendChild(header);
+
+          const qa = document.createElement("div");
+          qa.className = "qa-summary";
+          const linkedAnswer = linkifyURLs(
+            escapeHTML(entry.finalAnswer || "미기록")
+          );
+          qa.innerHTML = `
+      <div class="qa-item">
+        <span class="qa-label">질문</span>
+        <p class="qa-content">${escapeHTML(entry.firstQuestion || "미기록")}</p>
+      </div>
+      <div class="qa-item">
+        <span class="qa-label">최종 답변</span>
+        <p class="qa-content">${linkedAnswer}</p>
+      </div>
+    `;
+          card.appendChild(qa);
+
+          const ragLog = entry.logs.find((log) => log.step === RAG_STEP);
+          if (ragLog && ragLog.body?.detail) {
+            const ragCard = buildRagResultCard(
+              ragLog.body.result,
+              ragLog.body.detail
+            );
+            card.appendChild(ragCard);
+          }
+
+          if (entry.missingSteps.length) {
+            const missingList = document.createElement("ul");
+            missingList.className = "missing-list";
+            entry.missingSteps.forEach((step) => {
+              const li = document.createElement("li");
+              li.textContent = step;
+              missingList.appendChild(li);
+            });
+            card.appendChild(missingList);
+          }
+
+          const stepsWrapper = document.createElement("div");
+          stepsWrapper.className = "entry-steps";
+          entry.logs.forEach((log) => {
+            const details = document.createElement("details");
+            details.className = "step";
+            const statusClass =
+              log.status === "success"
+                ? "success"
+                : log.status
+                ? "failure"
+                : "unknown";
+            const statusLabel =
+              log.status === "success"
+                ? "success"
+                : log.status
+                ? log.status
+                : "미기록";
+            const bodyText = formatBody(log.body);
+            const escapedBody = escapeHTML(bodyText);
+            details.innerHTML = `
+        <summary>
+          ${escapeHTML(log.step)}
+          <span class="step-meta">
+            <span>${formatSeconds(log.duration)}</span>
+            <span>${formatDate(log.issued)}</span>
+          </span>
+          <span class="status-flag ${statusClass}">${escapeHTML(
+              statusLabel
+            )}</span>
+        </summary>
+        <div class="step-content">
+          <div class="step-actions">
+            <button class="copy-button" type="button">복사</button>
+          </div>
+          <pre>${escapedBody}</pre>
+        </div>
+      `;
+            const copyButton = details.querySelector(".copy-button");
+            if (copyButton) {
+              const originalLabel = copyButton.textContent;
+              copyButton.addEventListener("click", async (event) => {
+                event.preventDefault();
+                event.stopPropagation();
+                try {
+                  copyButton.disabled = true;
+                  await copyToClipboard(bodyText);
+                  copyButton.textContent = "복사 완료";
+                  setTimeout(() => {
+                    copyButton.textContent = originalLabel;
+                    copyButton.disabled = false;
+                  }, 2000);
+                } catch (err) {
+                  copyButton.textContent = "복사 실패";
+                  setTimeout(() => {
+                    copyButton.textContent = originalLabel;
+                    copyButton.disabled = false;
+                  }, 2000);
+                }
+              });
+            }
+            stepsWrapper.appendChild(details);
+          });
+          card.appendChild(stepsWrapper);
+          return card;
+        }
+
+        function renderEntries() {
+          if (!refs.entryList || !refs.filterStatus) return;
+          if (!state.entries.length) {
+            refs.entryList.innerHTML = "<p>로드된 로그가 없습니다.</p>";
+            refs.entryCount.textContent = "";
+            refs.filterStatus.textContent =
+              "데이터를 불러오면 요약이 표시됩니다.";
+            refs.filterStatus.className = "status-pill info";
+            return;
+          }
+          const filtered = applyFilters(state.entries);
+          refs.entryList.innerHTML = "";
+          filtered.forEach((entry) => {
+            const card = buildEntryCard(entry);
+            refs.entryList.appendChild(card);
+          });
+          const missingCount = state.entries.filter(
+            (entry) => entry.missingSteps.length > 0
+          ).length;
+          const unansweredCount = state.entries.filter((entry) => {
+            if (typeof entry.finalAnswer === "string") {
+              return entry.finalAnswer.trim().length === 0;
+            }
+            return !entry.finalAnswer;
+          }).length;
+          refs.entryCount.textContent = `${filtered.length}건 표시 (전체 ${state.entries.length}건)`;
+          const statusText = `${state.entries.length}건 중 ${filtered.length}건 표시 · 누락 단계가 있는 요청 ${missingCount}건 · 최종 답변 미기록 ${unansweredCount}건`;
+          refs.filterStatus.textContent = statusText;
+          refs.filterStatus.className = filtered.length
+            ? "status-pill success"
+            : "status-pill warning";
+          if (!filtered.length) {
+            const empty = document.createElement("p");
+            empty.textContent =
+              "조건에 맞는 요청이 없습니다. 필터를 조정해 보세요.";
+            refs.entryList.appendChild(empty);
+          }
+        }
+
+        function renderAll() {
+          renderSummary();
+          renderStepStats();
+          renderIntentStats();
+          renderEntries();
+        }
+
+        function updateFiltersVisibility(hasData) {
+          if (!refs.filters) return;
+          if (hasData) {
+            refs.filters.classList.add("active");
+          } else {
+            refs.filters.classList.remove("active");
+          }
+        }
+
+        function ingestData(rawData, sourceLabel = "수동 입력") {
+          const asArray = Array.isArray(rawData) ? rawData : [rawData];
+          const cleaned = asArray.filter(
+            (item) => item && typeof item === "object"
+          );
+          if (!cleaned.length) {
+            throw new Error("로그 항목을 찾지 못했습니다.");
+          }
+          const entries = cleaned.map(normalizeEntry);
+          const expectedSteps = deriveExpectedSteps(entries);
+          entries.forEach((entry) => {
+            entry.missingSteps = computeMissingSteps(entry, expectedSteps);
+            entry.searchText = buildSearchText(entry);
+            const questionLog = entry.logs.find(
+              (log) => log.step === QUESTION_STEP
+            );
+            let answerLog = entry.logs.find(
+              (log) => log.step == ANSWER_STEP_FROM_DB
+            );
+
+            const questionBody = questionLog?.body;
+            const answerBody = answerLog?.body;
+            const questionText =
+              typeof questionBody?.text === "string"
+                ? questionBody.text
+                : typeof questionBody?.detail?.text === "string"
+                ? questionBody.detail.text
+                : "";
+            const answerText =
+              typeof answerBody?.detail === "string"
+                ? answerBody.detail
+                : typeof answerBody?.detail?.answer === "string"
+                ? answerBody.detail.answer
+                : typeof answerBody?.detail?.llm_result?.answer === "string"
+                ? answerBody.detail.llm_result.answer
+                : typeof answerBody?.answer === "string"
+                ? answerBody.answer
+                : "";
+            entry.firstQuestion = questionText ? questionText.trim() : "";
+            entry.finalAnswer = answerText ? answerText.trim() : "";
+          });
+          state.entries = entries;
+          state.expectedSteps = expectedSteps;
+          state.intentStats = computeIntentStats(entries);
+          state.search = "";
+          state.stepFilter = "";
+          state.missingOnly = false;
+          state.unansweredOnly = false;
+          state.sourceLabel = sourceLabel;
+          if (refs.searchInput) refs.searchInput.value = "";
+          if (refs.stepFilter) refs.stepFilter.value = "";
+          if (refs.missingOnly) refs.missingOnly.checked = false;
+          if (refs.unansweredOnly) refs.unansweredOnly.checked = false;
+          updateStepFilterOptions(expectedSteps);
+          updateFiltersVisibility(true);
+          renderAll();
+        }
+
+        function handleFile(file) {
+          if (!file) return;
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            try {
+              const text = event.target?.result;
+              const parsed = JSON.parse(text);
+              ingestData(parsed, file.name || "수동 입력");
+              setStatus(
+                `${file.name || "선택된"} 파일을 불러왔습니다.`,
+                "success"
+              );
+            } catch (err) {
+              console.error(err);
+              setStatus(`JSON 파싱 실패: ${err.message}`, "error");
+            }
+          };
+          reader.onerror = () => {
+            setStatus("파일을 읽는 중 오류가 발생했습니다.", "error");
+          };
+          reader.readAsText(file, "utf-8");
+        }
+
+        if (refs.fileInput) {
+          refs.fileInput.addEventListener("change", (event) => {
+            const [file] = event.target.files || [];
+            handleFile(file);
+            event.target.value = "";
+          });
+        }
+
+        if (refs.dropzone) {
+          refs.dropzone.addEventListener("dragenter", (event) => {
+            event.preventDefault();
+            refs.dropzone.classList.add("dragover");
+          });
+          refs.dropzone.addEventListener("dragover", (event) => {
+            event.preventDefault();
+            refs.dropzone.classList.add("dragover");
+          });
+          refs.dropzone.addEventListener("dragleave", () => {
+            refs.dropzone.classList.remove("dragover");
+          });
+          refs.dropzone.addEventListener("drop", (event) => {
+            event.preventDefault();
+            refs.dropzone.classList.remove("dragover");
+            const files = event.dataTransfer?.files;
+            if (files && files.length) {
+              handleFile(files[0]);
+            }
+          });
+        }
+
+        if (refs.searchInput) {
+          refs.searchInput.addEventListener("input", (event) => {
+            state.search = event.target.value;
+            renderEntries();
+          });
+        }
+
+        if (refs.stepFilter) {
+          refs.stepFilter.addEventListener("change", (event) => {
+            state.stepFilter = event.target.value;
+            renderEntries();
+          });
+        }
+
+        if (refs.missingOnly) {
+          refs.missingOnly.addEventListener("change", (event) => {
+            state.missingOnly = event.target.checked;
+            renderEntries();
+          });
+        }
+        if (refs.unansweredOnly) {
+          refs.unansweredOnly.addEventListener("change", (event) => {
+            state.unansweredOnly = event.target.checked;
+            renderEntries();
+          });
+        }
+
+        updateFiltersVisibility(false);
+        renderAll();
+        setStatus("JSON 파일을 선택하거나 드래그해 불러오세요.", "info");
+      })();
+    </script>
+  </body>
+</html>
