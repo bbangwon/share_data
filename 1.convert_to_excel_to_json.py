@@ -1,14 +1,27 @@
 import json
+import os
 import sys
 
 import openpyxl
+
+
+def format_as_int_string(value):
+    try:
+        f_val = float(value)
+
+        if f_val.is_integer():
+            return str(int(f_val))
+        else:
+            return str(f_val)
+    except (ValueError, TypeError):
+        return str(value)
 
 
 def convert_excel_to_json(input_filename, output_filename):
     try:
         # 1. 엑셀 파일 로드 (data_only=True는 수식이 아닌 값을 가져옴)
         wb = openpyxl.load_workbook(input_filename, data_only=True)
-        ws = wb.active  # 현재 활성화된 시트 선택
+        ws = wb["부서FAQ_GoldenSet"]  #  워크시트 선택
 
         # 2. '질의문' 헤더 찾기
         # 몇 번째 행, 몇 번째 열에 '질의문'이 있는지 찾습니다.
@@ -45,7 +58,7 @@ def convert_excel_to_json(input_filename, output_filename):
             number_text = row[number_index]
             question_text = row[question_col_index]
             ref_doc_text = row[ref_doc_index]
-            ref_doc_page_text = row[ref_doc_page_index]
+            ref_doc_page_text = format_as_int_string(row[ref_doc_page_index])
 
             # 내용이 없으면 건너뜀
             if question_text is None or str(question_text).strip() == "":
@@ -79,11 +92,17 @@ def convert_excel_to_json(input_filename, output_filename):
 
 
 if __name__ == "__main__":
-    # 실행 시 인자 개수 확인 (스크립트명 + 입력파일 + 출력파일 = 3개)
-    if len(sys.argv) != 3:
-        print("사용법: python 스크립트명.py <입력_엑셀파일.xlsx> <출력_파일.json>")
-        print("예시: python convert_to_excel_to_json.py input.xlsx output.json")
+    # 실행 시 인자 개수 확인 (스크립트명 + 입력파일 [+ 출력파일])
+    if len(sys.argv) < 2 or len(sys.argv) > 3:
+        print("사용법: python 스크립트명.py <입력_엑셀파일.xlsx> [출력_파일.json]")
+        print("예시: python convert_to_excel_to_json.py input.xlsx")
+        print("      python convert_to_excel_to_json.py input.xlsx output.json")
     else:
         input_file = sys.argv[1]
-        output_file = sys.argv[2]
+        if len(sys.argv) == 3:
+            output_file = sys.argv[2]
+        else:
+            # 입력 파일명에서 확장자를 .json으로 변경
+            base_name = os.path.splitext(input_file)[0]
+            output_file = base_name + ".json"
         convert_excel_to_json(input_file, output_file)

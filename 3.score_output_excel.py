@@ -1,4 +1,5 @@
 import os
+import re
 import sys
 
 import openpyxl
@@ -24,24 +25,89 @@ def parse_pages(page_str):
     if not s or s.lower() == "nan" or s == "none":
         return pages
 
-    # 쉼표로 분리
-    parts = s.split(",")
+    # 단일 개행(\n)로 페이지가 이어지는 케이스(예: "2,3,5\n 594, 595") 대응
+    # *중요*: 여러 문서/페이지 쌍 구분(2개 이상 개행)은 상위 로직에서 처리하고,
+    # 여기서는 "하나의 페이지 블록" 안에서 숫자 토큰을 안정적으로 분리하는 역할만 한다.
+    s = s.replace("\r\n", "\n").replace("\r", "\n")
+
+    # 쉼표/개행으로 1차 분리 후, 토큰 내부 공백은 추가 분리
+    parts = re.split(r"[,\n]+", s)
     for part in parts:
         part = part.strip()
-        if "~" in part:
-            # 범위 처리 (예: 1~3)
-            try:
-                start_s, end_s = part.split("~")
-                start = int(start_s)
-                end = int(end_s)
-                for i in range(start, end + 1):
-                    pages.add(str(i))
-            except ValueError:
-                pages.add(part)
-        else:
-            # 단일 페이지
-            pages.add(part)
+        if not part:
+            continue
+
+        # 공백으로도 페이지가 분리된 경우(예: "5 594") 대응
+        subparts = [p for p in re.split(r"\s+", part) if p]
+        for token in subparts:
+            token = token.strip()
+            if not token:
+                continue
+            if "~" in token:
+                # 범위 처리 (예: 1~3)
+                try:
+                    start_s, end_s = re.split(r"\s*~\s*", token, maxsplit=1)
+                    start = int(start_s)
+                    end = int(end_s)
+                    for i in range(start, end + 1):
+                        pages.add(str(i))
+                except ValueError:
+                    pages.add(token)
+            else:
+                pages.add(token)
     return pages
+
+
+_MULTI_NEWLINE_SPLIT_RE = re.compile(r"(?:\n[ \t]*){2,}")
+
+
+def split_by_multi_newlines(val):
+    """2개 이상 개행(중간 공백 라인 포함) 기준으로 블록을 분리한다."""
+    if val is None:
+        return []
+    s = str(val)
+    s = s.replace("\r\n", "\n").replace("\r", "\n")
+    s = s.strip()
+    if not s or s.lower() == "nan" or s == "none":
+        return []
+
+    blocks = [b.strip() for b in _MULTI_NEWLINE_SPLIT_RE.split(s)]
+    return [b for b in blocks if b]
+
+
+def pair_docs_and_pages(doc_val, page_val):
+    """문서/페이지 값이 2개 이상 개행으로 분리된 경우, 같은 인덱스끼리 (doc, page_block)로 짝지어 반환."""
+    doc_blocks = split_by_multi_newlines(doc_val)
+    page_blocks = split_by_multi_newlines(page_val)
+
+    if not doc_blocks and not page_blocks:
+        return []
+
+    # 둘 중 하나만 여러 블록인 경우도 현실적으로 발생할 수 있어 최대한 합리적으로 매칭한다.
+    # - 문서가 1개, 페이지가 N개: 같은 문서에 대해 페이지 블록을 N개로 해석
+    # - 페이지가 1개, 문서가 N개: 각 문서에 같은 페이지 블록을 적용(데이터 정합성 문제지만 방어)
+    if not doc_blocks:
+        doc_blocks = [""]
+    if not page_blocks:
+        page_blocks = [""]
+
+    if len(doc_blocks) == len(page_blocks):
+        pairs = list(zip(doc_blocks, page_blocks))
+    elif len(doc_blocks) == 1 and len(page_blocks) > 1:
+        pairs = [(doc_blocks[0], pb) for pb in page_blocks]
+    elif len(page_blocks) == 1 and len(doc_blocks) > 1:
+        pairs = [(db, page_blocks[0]) for db in doc_blocks]
+    else:
+        # 일반 케이스: 가능한 인덱스 범위 내에서만 매칭
+        pairs = list(zip(doc_blocks, page_blocks))
+
+    normalized_pairs = []
+    for doc, pg in pairs:
+        doc_norm = normalize_val(doc)
+        pg_norm = normalize_val(pg)
+        if doc_norm or pg_norm:
+            normalized_pairs.append((doc_norm, pg_norm))
+    return normalized_pairs
 
 
 def check_red(cell):
@@ -108,8 +174,7 @@ def process_excel_log(input_file, output_file, condition_mode="AND"):
         cell_e.alignment = Alignment(vertical="top")
         cell_f.alignment = Alignment(vertical="top")
 
-        c_val = normalize_val(cell_c.value)
-        d_pages = parse_pages(cell_d.value)
+        doc_page_pairs = pair_docs_and_pages(cell_c.value, cell_d.value)
 
         # 5개씩 참조 데이터베이스 구축
         ref_db = dict()
@@ -128,20 +193,28 @@ def process_excel_log(input_file, output_file, condition_mode="AND"):
                     ref_db_color[(file_val, page_val)] = r_item
 
         # 검증 로직
-        if c_val and d_pages:
+        # - 문서/페이지가 2개 이상 개행으로 구분되면, 같은 인덱스끼리 (문서, 페이지블록)으로 매칭
+        # - 각 페이지블록은 parse_pages로 다중 페이지(쉼표/개행/범위)를 처리
+        required_keys = set()
+        for doc, page_block in doc_page_pairs:
+            if not doc or not page_block:
+                continue
+            for page in parse_pages(page_block):
+                if page:
+                    required_keys.add((doc, page))
+
+        if required_keys:
             found_count = 0
             referenced_count = 0
-            total_pages = len(d_pages)
+            total_items = len(required_keys)
 
-            for page in d_pages:
-                key = (c_val, page)
-
+            for key in required_keys:
                 # 1. DB에 존재하는지 확인
                 if key in ref_db:
                     found_count += 1
                     # 매칭된 행 색칠하기
                     r_item = ref_db[key]
-                    for col in range(9, 14):  # 8~12열 (H~L)
+                    for col in range(9, 14):
                         ws.cell(row=r_item, column=col).fill = light_green_fill
 
                 # 2. 빨간색(SLM참조)인지 확인
@@ -154,9 +227,9 @@ def process_excel_log(input_file, output_file, condition_mode="AND"):
                 exist_bool = found_count > 0
                 ref_bool = referenced_count > 0
             else:
-                # AND (기본값): 모든 페이지가 존재해야 True
-                exist_bool = found_count == total_pages
-                ref_bool = referenced_count == total_pages
+                # AND: 모든 (문서,페이지) 아이템이 존재/참조되어야 True
+                exist_bool = found_count == total_items
+                ref_bool = referenced_count == total_items
 
             cell_e.value = "포함" if exist_bool else "미포함"
             cell_f.value = "선택" if ref_bool else "미선택"
