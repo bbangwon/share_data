@@ -7,6 +7,7 @@ import json
 import argparse
 import datetime
 import time
+import re
 import httpx
 
 # pandas 및 openpyxl 의존성 검사
@@ -25,6 +26,184 @@ except ImportError:
     print("테스트 실행 전에 다음 명령어로 의존성을 설치해 주세요:")
     print("  pip install openpyxl")
     sys.exit(1)
+
+
+
+def parse_goldenset_pages(page_str):
+    if not page_str:
+        return set()
+    pages = set()
+    for p in str(page_str).split(','):
+        p = p.strip()
+        if p.isdigit():
+            pages.add(int(p))
+    return pages
+
+
+def extract_graph_was_pages(graph_was_response):
+    pages = set()
+    if not graph_was_response:
+        return pages
+    search_result = graph_was_response.get("search_result", [])
+    for doc in search_result:
+        page_val = doc.get("page")
+        if isinstance(page_val, list):
+            for p in page_val:
+                if isinstance(p, int):
+                    pages.add(p)
+                elif isinstance(p, str) and p.isdigit():
+                    pages.add(int(p))
+        elif isinstance(page_val, (int, float)):
+            pages.add(int(page_val))
+        elif isinstance(page_val, str) and page_val.isdigit():
+            pages.add(int(page_val))
+    return pages
+
+
+def extract_answer_pages(final_answer):
+    pages = set()
+    if not final_answer:
+        return pages
+    matches = re.findall(r'p\.\s*([0-9\s,]+)', str(final_answer))
+    for match in matches:
+        for part in match.split(','):
+            part = part.strip()
+            if part.isdigit():
+                pages.add(int(part))
+    return pages
+
+
+def write_summary_sheet(workbook, results):
+    from openpyxl.styles import Font, PatternFill, Alignment, Border, Side
+    
+    if "결과 요약" in workbook.sheetnames:
+        del workbook["결과 요약"]
+        
+    summary_sheet = workbook.create_sheet(title="결과 요약", index=0)
+    summary_sheet.views.sheetView[0].showGridLines = True
+    
+    # 폰트 및 채우기 설정
+    title_font = Font(name="맑은 고딕", size=16, bold=True, color="1F497D")
+    subtitle_font = Font(name="맑은 고딕", size=10, italic=True, color="595959")
+    header_font = Font(name="맑은 고딕", size=11, bold=True, color="FFFFFF")
+    bold_font = Font(name="맑은 고딕", size=11, bold=True)
+    normal_font = Font(name="맑은 고딕", size=10)
+    
+    header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
+    
+    # 테두리 설정
+    thin_side = Side(style='thin', color='D9D9D9')
+    thick_bottom = Side(style='medium', color='1F497D')
+    cell_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thin_side)
+    header_border = Border(left=thin_side, right=thin_side, top=thin_side, bottom=thick_bottom)
+    
+    # 타이틀
+    summary_sheet["A1"] = "📊 Busan AI RAG 골든셋 테스트 결과 요약"
+    summary_sheet["A1"].font = title_font
+    
+    summary_sheet["A2"] = f"생성 일시: {datetime.datetime.now().strftime('%Y-%m-%d %H:%M:%S')}"
+    summary_sheet["A2"].font = subtitle_font
+    
+    # --- 표 1: 정확도 지표 ---
+    summary_sheet["A4"] = "평가 구분"
+    summary_sheet["B4"] = "대상 건수"
+    summary_sheet["C4"] = "성공/매칭 건수"
+    summary_sheet["D4"] = "성공률 / 매칭률 (%)"
+    
+    for col_let in ["A", "B", "C", "D"]:
+        cell = summary_sheet[f"{col_let}4"]
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = header_border
+        
+    total_cases = len(results)
+    api_success = sum(1 for r in results if r["상태"] == "SUCCESS")
+    g_match = sum(1 for r in results if r["Graph-WAS 매칭 여부"] == "Y")
+    a_match = sum(1 for r in results if r["최종 답변 매칭 여부"] == "Y")
+    
+    metrics = [
+        ("API 호출 성공률", total_cases, api_success, (api_success / total_cases * 100) if total_cases > 0 else 0),
+        ("Graph-WAS 검색 성공률 (쪽번호 일치)", total_cases, g_match, (g_match / total_cases * 100) if total_cases > 0 else 0),
+        ("최종 답변 참조 성공률 (쪽번호 일치)", total_cases, a_match, (a_match / total_cases * 100) if total_cases > 0 else 0),
+    ]
+    
+    for idx, (label, tot, succ, rate) in enumerate(metrics, 5):
+        summary_sheet[f"A{idx}"] = label
+        summary_sheet[f"B{idx}"] = f"{tot}건"
+        summary_sheet[f"C{idx}"] = f"{succ}건"
+        summary_sheet[f"D{idx}"] = f"{rate:.1f}%"
+        
+        for col_let in ["A", "B", "C", "D"]:
+            cell = summary_sheet[f"{col_let}{idx}"]
+            cell.font = bold_font if col_let == "A" else normal_font
+            cell.border = cell_border
+            if col_let == "A":
+                cell.alignment = Alignment(horizontal="left", vertical="center")
+            else:
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                
+    # --- 표 2: 소요 시간 지표 ---
+    time_start_row = 10
+    summary_sheet[f"A{time_start_row}"] = "소요 시간 구분"
+    summary_sheet[f"B{time_start_row}"] = "평균 소요 시간 (ms)"
+    summary_sheet[f"C{time_start_row}"] = "최대 소요 시간 (ms)"
+    summary_sheet[f"D{time_start_row}"] = "최소 소요 시간 (ms)"
+    
+    for col_let in ["A", "B", "C", "D"]:
+        cell = summary_sheet[f"{col_let}{time_start_row}"]
+        cell.fill = header_fill
+        cell.font = header_font
+        cell.alignment = Alignment(horizontal="center", vertical="center")
+        cell.border = header_border
+        
+    def to_float(val):
+        try:
+            return float(val)
+        except (ValueError, TypeError):
+            return 0.0
+            
+    graph_times = [to_float(r.get("Graph-WAS 소요시간(ms)", 0)) for r in results]
+    llm_times = [to_float(r.get("LLM-Studio 소요시간(ms)", 0)) for r in results]
+    total_times = [to_float(r.get("총 소요시간(ms)", 0)) for r in results]
+    
+    avg_graph = sum(graph_times) / total_cases if total_cases > 0 else 0
+    avg_llm = sum(llm_times) / total_cases if total_cases > 0 else 0
+    avg_total = sum(total_times) / total_cases if total_cases > 0 else 0
+    
+    max_graph = max(graph_times) if graph_times else 0
+    max_llm = max(llm_times) if llm_times else 0
+    max_total = max(total_times) if total_times else 0
+    
+    min_graph = min(graph_times) if graph_times else 0
+    min_llm = min(llm_times) if llm_times else 0
+    min_total = min(total_times) if total_times else 0
+    
+    time_metrics = [
+        ("Graph-WAS 검색 소요시간", avg_graph, max_graph, min_graph),
+        ("LLM-Studio 답변생성 소요시간", avg_llm, max_llm, min_llm),
+        ("전체 프로세스 총 소요시간", avg_total, max_total, min_total)
+    ]
+    
+    for idx, (label, avg, mx, mn) in enumerate(time_metrics, time_start_row + 1):
+        summary_sheet[f"A{idx}"] = label
+        summary_sheet[f"B{idx}"] = f"{avg:.1f} ms"
+        summary_sheet[f"C{idx}"] = f"{mx:.1f} ms"
+        summary_sheet[f"D{idx}"] = f"{mn:.1f} ms"
+        
+        for col_let in ["A", "B", "C", "D"]:
+            cell = summary_sheet[f"{col_let}{idx}"]
+            cell.font = bold_font if col_let == "A" else normal_font
+            cell.border = cell_border
+            if col_let == "A":
+                cell.alignment = Alignment(horizontal="left", vertical="center")
+            else:
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                
+    summary_sheet.column_dimensions["A"].width = 38
+    summary_sheet.column_dimensions["B"].width = 18
+    summary_sheet.column_dimensions["C"].width = 18
+    summary_sheet.column_dimensions["D"].width = 24
 
 
 def parse_arguments():
@@ -181,7 +360,7 @@ def main():
             
             with httpx.Client(timeout=90.0) as client:
                 llm_res = client.post(
-                    f"{args.api_url}/api/llm/qa-response",
+                    f"{args.api_url}/llm-studio/v1/api/task/generate/syncapi/busan_ai_llm/nuclear_safety",
                     json=llm_studio_payload
                 )
                 llm_res.raise_for_status()
@@ -210,6 +389,15 @@ def main():
             fail_count += 1
             print(f"  ❌ 호출 실패: {error_msg}")
             
+        # 쪽번호 파싱 및 매칭 판단
+        goldenset_page_str = item.get("적용 쪽번호") or ""
+        goldenset_pages = parse_goldenset_pages(goldenset_page_str)
+        graph_was_pages = extract_graph_was_pages(graph_was_response)
+        final_answer_pages = extract_answer_pages(final_answer)
+
+        graph_was_match = "Y" if (goldenset_pages & graph_was_pages) else "N"
+        final_answer_match = "Y" if (goldenset_pages & final_answer_pages) else "N"
+
         # 결과 추가
         results.append({
             "No": idx,
@@ -223,7 +411,12 @@ def main():
             "에러 메시지": error_msg,
             "Graph-WAS 소요시간(ms)": round(duration_graph_ms, 2),
             "LLM-Studio 소요시간(ms)": round(duration_llm_ms, 2),
-            "총 소요시간(ms)": round(duration_graph_ms + duration_llm_ms, 2)
+            "총 소요시간(ms)": round(duration_graph_ms + duration_llm_ms, 2),
+            "골든셋 정답페이지": goldenset_page_str,
+            "Graph-WAS 추출페이지": ", ".join(map(str, sorted(graph_was_pages))),
+            "최종 답변 추출페이지": ", ".join(map(str, sorted(final_answer_pages))),
+            "Graph-WAS 매칭 여부": graph_was_match,
+            "최종 답변 매칭 여부": final_answer_match,
         })
         
         # 딜레이 대기
@@ -250,6 +443,9 @@ def main():
             workbook = writer.book
             worksheet = writer.sheets["테스트 결과"]
             
+            # 결과 요약 시트 작성
+            write_summary_sheet(workbook, results)
+            
             # 컬럼 너비 자동 조정
             for col in worksheet.columns:
                 max_len = 0
@@ -265,7 +461,7 @@ def main():
                 worksheet.column_dimensions[col_letter].width = min(max(max_len + 3, 10), 60)
                 
             # 정렬 및 줄바꿈 허용 (내용이 긴 열은 정렬 방식을 줘서 엑셀에서 보기 편하도록 함)
-            from openpyxl.styles import Alignment, PatternFill, PatternFill, Font
+            from openpyxl.styles import Alignment, PatternFill, Font
             
             header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
             header_font = Font(name="맑은 고딕", size=11, bold=True, color="FFFFFF")
@@ -276,12 +472,12 @@ def main():
                 cell.font = header_font
                 cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
                 
-            # 바디 텍스트 좌측 정렬 및 자동 줄바꿈
-            for row in worksheet.iter_rows(min_row=2, max_row=len(results) + 1, min_col=1, max_col=12):
+            # 바디 텍스트 스타일링 (총 17개 컬럼)
+            for row in worksheet.iter_rows(min_row=2, max_row=len(results) + 1, min_col=1, max_col=17):
                 for cell in row:
-                    # No, 상태, 시간 관련 컬럼은 가운데 정렬
+                    # No, 상태, 시간, 쪽번호 관련 열은 가운데 정렬
                     col_idx = cell.column
-                    if col_idx in [1, 8, 10, 11, 12]:  # No, 상태, 소요시간들
+                    if col_idx in [1, 8, 10, 11, 12, 13, 14, 15, 16, 17]:
                         cell.alignment = Alignment(horizontal="center", vertical="center")
                     else:
                         cell.alignment = Alignment(horizontal="left", vertical="top", wrap_text=True)
