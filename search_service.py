@@ -57,6 +57,47 @@ def extract_matched_terms(query: str, term_expansion_map: dict[str, str], kiwi: 
     return list(detected_terms)
 
 
+def rewrite_query_if_synonym_detected(query: str, term_expansion_map: dict[str, str], kiwi: Kiwi | None) -> tuple[str, bool]:
+    """질문에서 그래프 상의 동의어를 감지하여 매뉴얼 공식 용어로 치환합니다.
+    치환이 실제로 일어났다면 (치환된 쿼리, True)를, 그렇지 않다면 (원본 쿼리, False)를 반환합니다.
+    """
+    if not term_expansion_map:
+        return query, False
+
+    noun_tokens = set()
+    if kiwi is not None:
+        try:
+            for token in kiwi.tokenize(query):
+                if token.tag.startswith('N') or token.tag == 'SL':
+                    noun_tokens.add(token.form)
+        except Exception:
+            pass
+
+    # 치환 매핑쌍 수집 (단, 공식 용어가 아닌 동의어인 것만: word != official_term)
+    replace_pairs = []
+    for word, official_term in term_expansion_map.items():
+        if word == official_term:
+            continue
+        # extract_matched_terms 와 동일한 기준 적용
+        if (len(word) >= 3 and word in query) or (word in noun_tokens):
+            replace_pairs.append((word, official_term))
+
+    if not replace_pairs:
+        return query, False
+
+    # 긴 동의어 단어 순서로 정렬하여 부분 매칭 오인 방지
+    replace_pairs.sort(key=lambda x: len(x[0]), reverse=True)
+    
+    rewritten_query = query
+    replaced = False
+    for word, official_term in replace_pairs:
+        if word in rewritten_query:
+            rewritten_query = rewritten_query.replace(word, official_term)
+            replaced = True
+
+    return rewritten_query, replaced
+
+
 def retrieve_dense_candidates(client: QdrantClient, query_vector: list[float], limit: int) -> list:
     """Qdrant 밀집(Dense) 벡터 검색을 수행하여 후보 청크들을 가져옵니다."""
     if not query_vector:
@@ -276,7 +317,8 @@ def format_search_results(
     results: list, 
     effective_query: str, 
     duration_ms: float, 
-    terminology_context: list[str] | None = None
+    terminology_context: list[str] | None = None,
+    searched_query: str | None = None
 ) -> SearchPromptResponse:
     """계층 구조 검색 결과를 프롬프트용 XML 문서 포맷 및 API 응답 스펙에 맞게 가공합니다.
     
@@ -358,6 +400,7 @@ def format_search_results(
 
     return SearchPromptResponse(
         query=effective_query,
+        searched_query=searched_query,
         search_result=prompt_result_items,
         empty_prompt=empty_prompt,
         prompt=final_prompt,
@@ -371,6 +414,9 @@ def run_hybrid_search(request: SearchRequest) -> SearchPromptResponse:
     started_at = time.perf_counter()
     effective_query = request.effective_query()
     
+    search_query = effective_query
+    searched_query_val = None
+
     # 1. Qdrant 클라이언트 획득 (유실 시 재연결)
     client = get_qdrant_client()
     
@@ -385,17 +431,24 @@ def run_hybrid_search(request: SearchRequest) -> SearchPromptResponse:
         detected_official_terms = extract_matched_terms(effective_query, state.term_expansion_map, state.kiwi)
         if detected_official_terms:
             logger.info(f"🔎 Detected official manual terms: {detected_official_terms}")
+            
+        # 동의어 치환 감지 및 쿼리 재작성 실행
+        rewritten, replaced = rewrite_query_if_synonym_detected(effective_query, state.term_expansion_map, state.kiwi)
+        if replaced:
+            search_query = rewritten
+            searched_query_val = rewritten
+            logger.info(f"🔄 Synonym detected! Rewrote query from '{effective_query}' to '{search_query}'")
         
     query_vector = []
     if state.embeddings_model is not None:
         try:
-            query_vector = state.embeddings_model.embed_query(effective_query)
+            query_vector = state.embeddings_model.embed_query(search_query)
         except Exception as e:
             logger.error(f"Failed to generate query embedding: {e}")
 
     # 3. Dense, Sparse, Graph Boost 검색을 통해 후보군 조회
     dense_hits = retrieve_dense_candidates(client, query_vector, dense_limit)
-    sparse_hits = retrieve_sparse_candidates(client, effective_query, sparse_limit)
+    sparse_hits = retrieve_sparse_candidates(client, search_query, sparse_limit)
     
     if request.use_graph_boost:
         graph_boost_hits = retrieve_graph_boost_candidates(
@@ -409,7 +462,7 @@ def run_hybrid_search(request: SearchRequest) -> SearchPromptResponse:
     merged_candidates = merge_and_deduplicate_candidates(dense_hits, sparse_hits, graph_boost_hits)
 
     # 5. 크로스 인코더를 통한 Rerank 수행
-    reranked_results = rerank_candidates(effective_query, merged_candidates)
+    reranked_results = rerank_candidates(search_query, merged_candidates)
 
     # 5.1. reasoning-selector-was를 통한 원자력 안전 분야 재채점 (Nuclear Re-scoring)
     top_n = request.reasoning_rerank_top_n or settings.reasoning_rerank_top_n
@@ -440,7 +493,7 @@ def run_hybrid_search(request: SearchRequest) -> SearchPromptResponse:
             
             url = f"{settings.reasoning_selector_was_url.rstrip('/')}/evaluate-simple-nuclear"
             eval_payload = {
-                "query": effective_query,
+                "query": search_query,
                 "chunks": chunks
             }
             logger.debug(f"Calling Reasoning-Selector-WAS: url={url}, payload={eval_payload}")
@@ -501,7 +554,8 @@ def run_hybrid_search(request: SearchRequest) -> SearchPromptResponse:
         retrieved_hierarchy, 
         effective_query, 
         duration_ms, 
-        terminology_context=terminology_context
+        terminology_context=terminology_context,
+        searched_query=searched_query_val
     )
     logger.debug(f"run_hybrid_search response: {response.model_dump()}")
     return response
