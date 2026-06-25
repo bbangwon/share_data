@@ -27,6 +27,16 @@ except ImportError:
     print("  pip install openpyxl")
     sys.exit(1)
 
+# langchain 의존성 검사
+try:
+    from langchain_openai import ChatOpenAI
+    from langchain_core.messages import HumanMessage
+except ImportError:
+    print("🚨 [Error] 'langchain-openai' 또는 'langchain-core' 라이브러리가 설치되어 있지 않습니다.")
+    print("테스트 실행 전에 다음 명령어로 의존성을 설치해 주세요:")
+    print("  pip install langchain-openai langchain-core")
+    sys.exit(1)
+
 
 def parse_goldenset_pages(page_str):
     if not page_str:
@@ -249,6 +259,36 @@ def parse_arguments():
         help="API Key (기본값: None)"
     )
     parser.add_argument(
+        "--max-tokens",
+        type=int,
+        default=2048,
+        help="생성할 최대 토큰 수 (기본값: 2048, 제한하지 않으려면 0 이하로 설정)"
+    )
+    parser.add_argument(
+        "--temperature",
+        type=float,
+        default=0.0,
+        help="생성 온도 (기본값: 0.0. 반복 루프 발생 시 0.2 ~ 0.7 정도로 올려보세요)"
+    )
+    parser.add_argument(
+        "--frequency-penalty",
+        type=float,
+        default=0.0,
+        help="빈도 페널티 (기본값: 0.0. 반복 억제를 위해 0.1 ~ 1.0 사이 값 추천)"
+    )
+    parser.add_argument(
+        "--presence-penalty",
+        type=float,
+        default=0.0,
+        help="존재 페널티 (기본값: 0.0. 새로운 단어/표현 유도를 위해 0.1 ~ 1.0 사이 값 추천)"
+    )
+    parser.add_argument(
+        "--repetition-penalty",
+        type=float,
+        default=None,
+        help="반복 페널티 (기본값: None. vLLM/Ollama 등 지원 백엔드인 경우 1.1 ~ 1.2 등 지정)"
+    )
+    parser.add_argument(
         "--delay",
         type=float,
         default=1.0,
@@ -347,54 +387,54 @@ def main():
             
             prompt = graph_was_response.get("prompt", "")
             
-            # --- 2단계: ChatOpenAI 호환 API 호출 ---
-            print("  └─ ⚡ [2/2] ChatOpenAI 호환 API 최종 답변 생성 중...")
+            # --- 2단계: LangChain ChatOpenAI 최종 답변 생성 중 ---
+            print("  └─ ⚡ [2/2] LangChain ChatOpenAI 최종 답변 생성 중...")
             
-            headers = {
-                "Content-Type": "application/json",
+            llm_kwargs = {
+                "base_url": args.api_url,
+                "model": args.model,
+                "temperature": args.temperature,
+                "timeout": 90.0,
             }
             if args.api_key:
-                headers["Authorization"] = f"Bearer {args.api_key}"
+                llm_kwargs["api_key"] = args.api_key
+            if args.max_tokens and args.max_tokens > 0:
+                llm_kwargs["max_tokens"] = args.max_tokens
+            if args.frequency_penalty != 0.0:
+                llm_kwargs["frequency_penalty"] = args.frequency_penalty
+            if args.presence_penalty != 0.0:
+                llm_kwargs["presence_penalty"] = args.presence_penalty
                 
-            openai_payload = {
-                "model": args.model,
-                "messages": [
-                    {
-                        "role": "user",
-                        "content": prompt if prompt else user_query
-                    }
-                ],
-                "temperature": 0.0,
-                "stream": False
-            }
-            
+            model_kwargs = {}
+            if args.repetition_penalty is not None:
+                model_kwargs["repetition_penalty"] = args.repetition_penalty
+            if "gpt-oss" in args.model:
+                model_kwargs["reasoning_effort"] = "low"
+            if model_kwargs:
+                llm_kwargs["model_kwargs"] = model_kwargs
+                
             t_llm_start = time.time()
             
-            with httpx.Client(timeout=90.0) as client:
-                base_url = args.api_url.rstrip("/")
-                llm_res = client.post(
-                    f"{base_url}/chat/completions",
-                    headers=headers,
-                    json=openai_payload
-                )
-                llm_res.raise_for_status()
-                openai_response = llm_res.json()
-                
+            llm = ChatOpenAI(**llm_kwargs)
+            messages = [HumanMessage(content=prompt if prompt else user_query)]
+            llm_response = llm.invoke(messages)
+            
             t_llm_end = time.time()
             duration_llm_ms = (t_llm_end - t_llm_start) * 1000.0
             
-            # 응답 체크 및 답변 파싱
-            choices = openai_response.get("choices", [])
-            if not choices:
-                status = "FAIL"
-                error_msg = f"응답에서 choices를 찾을 수 없습니다: {openai_response}"
-                final_answer = f"🚨 오류 발생: {error_msg}"
-                fail_count += 1
-                print(f"  ❌ 에러 발생: {error_msg}")
-            else:
-                final_answer = choices[0].get("message", {}).get("content", "")
-                success_count += 1
-                print(f"  ✅ 완료 (소요시간: Graph={duration_graph_ms:.1f}ms, LLM={duration_llm_ms:.1f}ms)")
+            final_answer = llm_response.content
+            success_count += 1
+            print(f"  ✅ 완료 (소요시간: Graph={duration_graph_ms:.1f}ms, LLM={duration_llm_ms:.1f}ms)")
+            
+            # 리포트 저장을 위한 가짜(Mock) openai_payload, openai_response 구성 (필드 호환성 유지)
+            openai_payload = {
+                "llm_kwargs": {k: v for k, v in llm_kwargs.items() if k != "api_key"},
+                "messages": [m.content for m in messages]
+            }
+            openai_response = {
+                "content": final_answer,
+                "response_metadata": getattr(llm_response, "response_metadata", {})
+            }
                 
         except Exception as e:
             status = "FAIL"
